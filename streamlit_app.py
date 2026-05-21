@@ -2026,17 +2026,36 @@ def display_clinical_decision_support(report, clinical_intake):
         clinical_intake.get("dominant_limb", "Not specified"),
     )
 
-    table_rows = ""
-    for row in side_rows:
-        table_rows += f"""
-        <tr>
-            <td>{row["Side"]}</td>
-            <td>{row["Clinical Role"]}</td>
-            <td>{row["Knee Flexion @ IC"]}</td>
-            <td>{row["Peak Valgus"]}</td>
-            <td>{row["Interpretation"]}</td>
-        </tr>
-        """
+  table_rows = ""
+for row in side_rows:
+    table_rows += (
+        f"<tr>"
+        f"<td>{row['Side']}</td>"
+        f"<td>{row['Clinical Role']}</td>"
+        f"<td>{row['Knee Flexion @ IC']}</td>"
+        f"<td>{row['Peak Valgus']}</td>"
+        f"<td>{row['Interpretation']}</td>"
+        f"</tr>"
+    )
+
+html = f"""
+<div class="clinical-section">
+    <div class="clinical-section-title">Side-Specific Interpretation</div>
+    <table class="side-table">
+        <thead>
+            <tr>
+                <th>Side</th>
+                <th>Role</th>
+                <th>Knee Flexion @ IC</th>
+                <th>Peak Valgus</th>
+                <th>Interpretation</th>
+            </tr>
+        </thead>
+        <tbody>{table_rows}</tbody>
+    </table>
+</div>
+"""
+st.markdown(html, unsafe_allow_html=True)
 
     st.markdown(f"""
     <div class="clinical-section">
