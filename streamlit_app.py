@@ -2026,38 +2026,19 @@ def display_clinical_decision_support(report, clinical_intake):
         clinical_intake.get("dominant_limb", "Not specified"),
     )
 
-  table_rows = ""
-for row in side_rows:
-    table_rows += (
-        f"<tr>"
-        f"<td>{row['Side']}</td>"
-        f"<td>{row['Clinical Role']}</td>"
-        f"<td>{row['Knee Flexion @ IC']}</td>"
-        f"<td>{row['Peak Valgus']}</td>"
-        f"<td>{row['Interpretation']}</td>"
-        f"</tr>"
-    )
+    table_rows = ""
+    for row in side_rows:
+        table_rows += (
+            f"<tr>"
+            f"<td>{row['Side']}</td>"
+            f"<td>{row['Clinical Role']}</td>"
+            f"<td>{row['Knee Flexion @ IC']}</td>"
+            f"<td>{row['Peak Valgus']}</td>"
+            f"<td>{row['Interpretation']}</td>"
+            f"</tr>"
+        )
 
-html = f"""
-<div class="clinical-section">
-    <div class="clinical-section-title">Side-Specific Interpretation</div>
-    <table class="side-table">
-        <thead>
-            <tr>
-                <th>Side</th>
-                <th>Role</th>
-                <th>Knee Flexion @ IC</th>
-                <th>Peak Valgus</th>
-                <th>Interpretation</th>
-            </tr>
-        </thead>
-        <tbody>{table_rows}</tbody>
-    </table>
-</div>
-"""
-st.markdown(html, unsafe_allow_html=True)
-
-    st.markdown(f"""
+    html = f"""
     <div class="clinical-section">
         <div class="clinical-section-title">Side-Specific Interpretation</div>
         <table class="side-table">
@@ -2073,7 +2054,8 @@ st.markdown(html, unsafe_allow_html=True)
             <tbody>{table_rows}</tbody>
         </table>
     </div>
-    """, unsafe_allow_html=True)
+    """
+    st.markdown(html, unsafe_allow_html=True)
 
     notes = clinical_intake.get("clinician_notes") or "No manual notes entered."
     surgery = clinical_intake.get("surgery_history") or "No surgery history entered."
