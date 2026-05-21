@@ -1023,24 +1023,30 @@ def detect_initial_contact_voting(df, fps):
     if len(df) < max(8, int(0.25 * fps)):
         return None, {"reason": "insufficient frames"}
 
+    from scipy.signal import find_peaks
     votes = {}
+
+    def first_significant_peak(signal, min_prominence=0.02):
+        signal = np.array(signal, dtype=float)
+        peaks, props = find_peaks(signal, prominence=min_prominence * np.nanmax(np.abs(signal) + 1e-9))
+        return int(peaks[0]) if len(peaks) > 0 else int(np.nanargmax(signal))
 
     ankle_y = df[["left_ankle_y", "right_ankle_y"]].mean(axis=1).to_numpy(dtype=float)
     ankle_y = fill_smooth(ankle_y)
     if len(ankle_y) and not np.isnan(ankle_y).all():
         vel = np.gradient(ankle_y)
-        votes["ankle_velocity"] = int(np.nanargmax(vel))
+        votes["ankle_velocity"] = first_significant_peak(vel)
 
     lk = 180 - safe_series(df, "left_knee_flexion")
     rk = 180 - safe_series(df, "right_knee_flexion")
     knee_flex = fill_smooth(pd.concat([lk, rk], axis=1).mean(axis=1).to_numpy(dtype=float))
     if len(knee_flex) and not np.isnan(knee_flex).all():
-        votes["knee_flexion_change"] = int(np.nanargmax(np.gradient(knee_flex)))
+        votes["knee_flexion_change"] = first_significant_peak(np.gradient(knee_flex))
 
     com_y = fill_smooth(safe_series(df, "com_y").to_numpy(dtype=float))
     if len(com_y) and not np.isnan(com_y).all():
         vel = np.gradient(com_y)
-        votes["com_proxy_velocity"] = int(np.nanargmax(vel))
+        votes["com_proxy_velocity"] = first_significant_peak(vel)
 
     if not votes:
         return None, {"reason": "no usable IC signals"}
