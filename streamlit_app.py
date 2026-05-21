@@ -1019,44 +1019,104 @@ def fill_smooth(values):
         y = savgol_filter(y, window_length=window, polyorder=3)
     return y
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# IC DETECTION  —  v2: deceleration-event voting
+#
+# Conceptual fix: IC is NOT the peak of downward velocity (that happens mid-air).
+# IC is when downward velocity STOPS — a deceleration event.
+#
+# Three signals:
+#   1. ankle_plant      → ankle vertical deceleration peak after sustained descent
+#   2. knee_flexion_onset → first sustained onset of rapid knee bending
+#   3. com_deceleration → COM vertical deceleration peak after sustained descent
+#
+# Median vote across whichever signals fire.
+# ─────────────────────────────────────────────────────────────────────────────
 def detect_initial_contact_voting(df, fps):
-    if len(df) < max(8, int(0.25 * fps)):
+    min_frames = max(8, int(0.25 * fps))
+    if len(df) < min_frames:
         return None, {"reason": "insufficient frames"}
 
     from scipy.signal import find_peaks
     votes = {}
 
-    def first_significant_peak(signal, min_prominence=0.02):
-        signal = np.array(signal, dtype=float)
-        peaks, props = find_peaks(signal, prominence=min_prominence * np.nanmax(np.abs(signal) + 1e-9))
-        return int(peaks[0]) if len(peaks) > 0 else int(np.nanargmax(signal))
-
+    # ── Signal 1: Ankle plant ────────────────────────────────────────────────
+    # MediaPipe y increases downward (0 = top of frame).
+    # During fall: ankle_y increases (vel > 0).
+    # At IC: ankle_y stops increasing → velocity drops to ~0 → large deceleration.
+    # Detect the first significant deceleration peak that follows a real descent.
     ankle_y = df[["left_ankle_y", "right_ankle_y"]].mean(axis=1).to_numpy(dtype=float)
     ankle_y = fill_smooth(ankle_y)
-    if len(ankle_y) and not np.isnan(ankle_y).all():
-        vel = np.gradient(ankle_y)
-        votes["ankle_velocity"] = first_significant_peak(vel)
+    if not np.isnan(ankle_y).all():
+        vel = fill_smooth(np.gradient(ankle_y))
+        accel = np.gradient(vel)
+        decel = -accel   # flip so deceleration events are peaks
+        prom_floor = 0.03 * max(np.nanmax(decel) - np.nanmin(decel), 1e-9)
+        peaks, _ = find_peaks(
+            decel,
+            prominence=prom_floor,
+            distance=max(3, int(0.05 * fps)),
+        )
+        for p in peaks:
+            # Require that the preceding window had meaningful downward velocity
+            pre = vel[max(0, p - int(0.15 * fps)):p]
+            if len(pre) > 0 and np.nanmean(pre) > 1e-3:
+                votes["ankle_plant"] = int(p)
+                break
 
+    # ── Signal 2: Knee flexion onset ─────────────────────────────────────────
+    # Before IC the knee is relatively straight and stable.
+    # At IC the knee starts bending rapidly.
+    # Find the first frame where bending rate exceeds 15 % of its peak,
+    # sustained for at least 2 consecutive frames.
     lk = 180 - safe_series(df, "left_knee_flexion")
     rk = 180 - safe_series(df, "right_knee_flexion")
-    knee_flex = fill_smooth(pd.concat([lk, rk], axis=1).mean(axis=1).to_numpy(dtype=float))
-    if len(knee_flex) and not np.isnan(knee_flex).all():
-        votes["knee_flexion_change"] = first_significant_peak(np.gradient(knee_flex))
+    knee_flex = fill_smooth(
+        pd.concat([lk, rk], axis=1).mean(axis=1).to_numpy(dtype=float)
+    )
+    if not np.isnan(knee_flex).all():
+        flex_rate = fill_smooth(np.gradient(knee_flex))
+        max_rate = np.nanmax(flex_rate)
+        if max_rate > 0:
+            onset_thresh = 0.15 * max_rate
+            above = flex_rate > onset_thresh
+            for i in range(len(above) - 2):
+                if above[i] and above[i + 1]:   # sustained ≥ 2 frames
+                    votes["knee_flexion_onset"] = int(i)
+                    break
 
+    # ── Signal 3: COM deceleration ───────────────────────────────────────────
+    # COM continues to drop after IC (knees flex) but the rate of descent slows.
+    # IC = first significant deceleration of COM after sustained descent.
     com_y = fill_smooth(safe_series(df, "com_y").to_numpy(dtype=float))
-    if len(com_y) and not np.isnan(com_y).all():
-        vel = np.gradient(com_y)
-        votes["com_proxy_velocity"] = first_significant_peak(vel)
+    if not np.isnan(com_y).all():
+        vel = fill_smooth(np.gradient(com_y))
+        accel = np.gradient(vel)
+        decel = -accel
+        prom_floor = 0.02 * max(np.nanmax(np.abs(decel)), 1e-9)
+        peaks, _ = find_peaks(
+            decel,
+            prominence=prom_floor,
+            distance=max(3, int(0.05 * fps)),
+        )
+        for p in peaks:
+            pre = vel[max(0, p - int(0.10 * fps)):p]
+            if len(pre) > 0 and np.nanmean(pre) > 1e-3:
+                votes["com_deceleration"] = int(p)
+                break
 
     if not votes:
-        return None, {"reason": "no usable IC signals"}
+        return None, {"reason": "no usable IC deceleration signals"}
 
     vals = list(votes.values())
-    return int(round(float(np.median(vals)))), {
+    median_ic = int(round(float(np.median(vals))))
+    return median_ic, {
         "votes": votes,
         "vote_spread_frames": int(max(vals) - min(vals)) if len(vals) > 1 else 0,
-        "method": "multi-signal median vote",
+        "method": "deceleration-event voting v2",
     }
+
 
 def consecutive_abnormal(series, threshold, direction="above", min_frames=2):
     s = pd.to_numeric(series, errors="coerce").dropna()
@@ -1442,7 +1502,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     ic, vote_details = detect_initial_contact_voting(df, fps)
     report.ic_frame = ic
     report.ic_time_s = ic / fps if ic is not None else None
-    report.ic_detection_method = vote_details.get("method", "multi-signal voting")
+    report.ic_detection_method = vote_details.get("method", "deceleration-event voting v2")
     report.ic_vote_details = vote_details
     report.phase_windows = get_phase_windows(ic, fps, len(df))
 
@@ -1476,8 +1536,22 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     report.peak_left_valgus = peak_max("left_knee_valgus_2d")
     report.peak_right_valgus = peak_max("right_knee_valgus_2d")
     report.peak_pelvis_drop = peak_absmax("pelvis_drop")
-    report.max_lateral_trunk_lean = df["lateral_trunk_lean"].abs().dropna().max()
-    report.max_anterior_trunk_lean = df["anterior_trunk_lean"].dropna().max()
+
+    # ── Trunk lean: windowed to post-IC only ─────────────────────────────────
+    # Previously used the full video, which contaminated results with
+    # airborne-phase trunk position. Now gated to start at IC frame.
+    post_ic_start = ic if ic is not None else 0
+    post_ic_df = df.iloc[post_ic_start:]
+    report.max_lateral_trunk_lean = (
+        post_ic_df["lateral_trunk_lean"].abs().dropna().max()
+        if not post_ic_df.empty and "lateral_trunk_lean" in post_ic_df.columns
+        else None
+    )
+    report.max_anterior_trunk_lean = (
+        post_ic_df["anterior_trunk_lean"].dropna().max()
+        if not post_ic_df.empty and "anterior_trunk_lean" in post_ic_df.columns
+        else None
+    )
 
     if report.left_knee_flexion_at_IC is not None and report.right_knee_flexion_at_IC is not None:
         denom = (report.left_knee_flexion_at_IC + report.right_knee_flexion_at_IC) / 2
@@ -2265,7 +2339,7 @@ def display_result_strip(report):
     """, unsafe_allow_html=True)
 
 def main():
-    st.caption("Version: 2D-ONLY-v3 | Clinical + Multi-signal IC + Normalization + Hybrid Scoring + Validation")
+    st.caption("Version: 2D-ONLY-v4 | IC Detection: deceleration-event voting | Trunk lean: post-IC windowed")
     display_premium_header()
 
     if "analysis_done" not in st.session_state:
@@ -2485,6 +2559,9 @@ def main():
                     st.download_button("Download Clinic PDF", pdf_data, "clinic_report.pdf", "application/pdf")
                 except Exception as e:
                     st.warning(f"PDF export unavailable: {e}")
+
+    else:
+        display_upload_guidance()
 
 if __name__ == "__main__":
     main()
