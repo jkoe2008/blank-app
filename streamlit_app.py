@@ -1029,12 +1029,7 @@ def detect_initial_contact_voting(df, fps):
     ankle_y = fill_smooth(ankle_y)
     if len(ankle_y) and not np.isnan(ankle_y).all():
         vel = np.gradient(ankle_y)
-        peak = int(np.nanargmax(vel))
-        threshold = 0.20 * vel[peak]
-        for i in range(peak, len(vel)):
-            if vel[i] < threshold:
-                votes["ankle_velocity"] = i
-                break
+        votes["ankle_velocity"] = int(np.nanargmax(vel))
 
     lk = 180 - safe_series(df, "left_knee_flexion")
     rk = 180 - safe_series(df, "right_knee_flexion")
@@ -1045,12 +1040,7 @@ def detect_initial_contact_voting(df, fps):
     com_y = fill_smooth(safe_series(df, "com_y").to_numpy(dtype=float))
     if len(com_y) and not np.isnan(com_y).all():
         vel = np.gradient(com_y)
-        peak = int(np.nanargmax(vel))
-        threshold = 0.20 * vel[peak]
-        for i in range(peak, len(vel)):
-            if vel[i] < threshold:
-                votes["com_proxy_velocity"] = i
-                break
+        votes["com_proxy_velocity"] = int(np.nanargmax(vel))
 
     if not votes:
         return None, {"reason": "no usable IC signals"}
