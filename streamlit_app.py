@@ -1506,21 +1506,25 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     report.ic_vote_details = vote_details
     report.phase_windows = get_phase_windows(ic, fps, len(df))
 
-    def at_ic(col):
-        if ic is None:
+     def at_ic(col):
+        if ic is None or col not in df.columns:
             return None
 
-        max_offset = int(0.15 * fps)
-        start = max(0, ic - max_offset)
-        end = min(len(df), ic + max_offset + 1)
+        w = df[col].iloc[max(0, ic - 2): min(len(df), ic + 3)].dropna()
 
-        w = df[col].iloc[start:end].dropna()
+        if w.empty:
+            return None
 
         if col in ["left_knee_flexion", "right_knee_flexion"]:
-            # Raw knee angles that imply near-lockout at landing are likely tracking artifacts.
-         w = w[(w < 160) & (w > 90)]
+            valid_w = w[(w < 160) & (w > 90)]
 
-        return w.median() if not w.empty else None
+            if valid_w.empty:
+                return None
+
+            return float(valid_w.median())
+
+        return float(w.median())
+
     def peak_min(col, n=90):
         start = ic if ic is not None else 0
         w = df[col].iloc[start:start + n]
