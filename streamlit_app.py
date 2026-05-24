@@ -1657,7 +1657,7 @@ for side, val, col in [("Left", report.peak_left_valgus, "left_knee_valgus_2d"),
         if val > T["max_safe_valgus_deg"] and persistent and confidence_ok:
             ...
 
-    if report.peak_pelvis_drop is not None and report.peak_pelvis_drop > T["max_safe_pelvis_drop_deg"] and confidence_ok:
+if report.peak_pelvis_drop is not None and report.peak_pelvis_drop > T["max_safe_pelvis_drop_deg"] and confidence_ok:
         sev = (report.peak_pelvis_drop - T["max_safe_pelvis_drop_deg"]) / 15.0
         acl_score += 8 * min(sev, 1.0)
         gen_score += 8 * min(sev, 1.0)
@@ -1677,7 +1677,7 @@ for side, val, col in [("Left", report.peak_left_valgus, "left_knee_valgus_2d"),
         flags.append(f"⚠️ Bilateral asymmetry - {report.knee_flexion_asymmetry_pct:.1f}%")
         recs.append("Address asymmetry with unilateral training.")
 
-            # Pattern escalation: stiff bilateral landing + unilateral valgus is clinically higher risk
+    # Pattern escalation: stiff bilateral landing + unilateral valgus is clinically higher risk
     ic_flex_vals = [
         180 - v for v in [
             report.left_knee_flexion_at_IC,
@@ -1694,7 +1694,7 @@ for side, val, col in [("Left", report.peak_left_valgus, "left_knee_valgus_2d"),
         if v is not None
     ]
 
-  if confidence_ok and not suppress_ic_knee_scoring and ic_flex_vals and valgus_vals:
+    if confidence_ok and not suppress_ic_knee_scoring and ic_flex_vals and valgus_vals:
         min_ic_flex = min(ic_flex_vals)
         max_ic_flex = max(ic_flex_vals)
         max_valgus = max(valgus_vals)
@@ -1739,7 +1739,6 @@ for side, val, col in [("Left", report.peak_left_valgus, "left_knee_valgus_2d"),
         report.flags.insert(0, "ℹ️ Analysis quality warning: review failure detection before interpreting risk.")
 
     return report, df
-
 
 def build_clinical_intake(patient_age, sport, competition_level, dominant_limb, involved_limb, prior_acl, surgery_history, pain_score, swelling, instability, rts_phase, clinician_notes):
     return {
