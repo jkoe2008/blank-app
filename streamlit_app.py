@@ -1677,6 +1677,45 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         flags.append(f"⚠️ Bilateral asymmetry - {report.knee_flexion_asymmetry_pct:.1f}%")
         recs.append("Address asymmetry with unilateral training.")
 
+            # Pattern escalation: stiff bilateral landing + unilateral valgus is clinically higher risk
+    ic_flex_vals = [
+        180 - v for v in [
+            report.left_knee_flexion_at_IC,
+            report.right_knee_flexion_at_IC,
+        ]
+        if v is not None
+    ]
+
+    valgus_vals = [
+        v for v in [
+            report.peak_left_valgus,
+            report.peak_right_valgus,
+        ]
+        if v is not None
+    ]
+
+    if confidence_ok and ic_flex_vals and valgus_vals:
+        min_ic_flex = min(ic_flex_vals)
+        max_ic_flex = max(ic_flex_vals)
+        max_valgus = max(valgus_vals)
+
+        if max_ic_flex < 20 and max_valgus >= 15:
+            acl_score = max(acl_score, 55.0)
+            gen_score = max(gen_score, 40.0)
+            flags.append(
+                "🚨 Combined high-risk landing pattern - bilateral stiff initial contact with excessive unilateral valgus"
+            )
+            recs.append(
+                "Prioritize landing retraining: increase knee flexion at contact while controlling frontal-plane knee collapse."
+            )
+
+        elif min_ic_flex < 15 and max_valgus >= 15:
+            acl_score = max(acl_score, 45.0)
+            gen_score = max(gen_score, 32.0)
+            flags.append(
+                "⚠️ Combined landing concern - stiff initial contact with excessive unilateral valgus"
+            )
+
     report.acl_risk_score = min(round(acl_score, 1), 100.0)
     report.general_injury_risk_score = min(round(gen_score, 1), 100.0)
     report.hybrid_score_details = {"used": False, "reason": "no labeled dataset model supplied"}
