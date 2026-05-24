@@ -1534,7 +1534,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
 
     measurement_quality_flags = []
 
-       measurement_quality_flags = []
+    measurement_quality_flags = []
     suppress_ic_knee_scoring = False
 
     report.left_knee_flexion_at_IC = at_ic("left_knee_flexion")
