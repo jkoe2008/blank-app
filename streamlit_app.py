@@ -1727,13 +1727,13 @@ if not any(f.startswith(("⚠️", "🚨")) for f in flags):
         flags.insert(0, "✅ No significant high-confidence biomechanical risk flags detected.")
         recs.append("Maintain current landing mechanics.")
 
-    report.flags = flags
-    report.recommendations = recs
-    report.movement_profile = classify_movement_profile(report)
-    report.progressions = build_progressions(report)
-    report = add_uncertainty(report)
-    report.failure_flags = detect_failures(report, df, fps)
-    report.baseline_percentiles = compute_baseline_percentiles(report, baseline_df)
+report.flags = flags
+report.recommendations = recs
+report.movement_profile = classify_movement_profile(report)
+report.progressions = build_progressions(report)
+report = add_uncertainty(report)
+report.failure_flags = detect_failures(report, df, fps)
+report.baseline_percentiles = compute_baseline_percentiles(report, baseline_df)
 
     if report.failure_flags:
         report.flags.insert(0, "ℹ️ Analysis quality warning: review failure detection before interpreting risk.")
