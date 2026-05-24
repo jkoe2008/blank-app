@@ -1516,9 +1516,11 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
             return None
 
         if col in ["left_knee_flexion", "right_knee_flexion"]:
-            valid_w = w[(w < 160) & (w > 90)]
+            valid_w = w[(w < 170) & (w > 90)]
+
             if valid_w.empty:
                 return None
+
             return float(valid_w.median())
 
         return float(w.median())
