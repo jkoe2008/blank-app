@@ -1509,8 +1509,14 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     def at_ic(col):
         if ic is None:
             return None
-        w = df[col].iloc[max(0, ic - 2):ic + 3]
-        return w.dropna().mean() if not w.dropna().empty else None
+
+        w = df[col].iloc[max(0, ic - 4):ic + 5].dropna()
+
+        if col in ["left_knee_flexion", "right_knee_flexion"]:
+            # Raw knee angle near full lockout at landing is likely a MediaPipe tracking artifact.
+            w = w[w < 172]
+
+        return w.median() if not w.empty else None
 
     def peak_min(col, n=90):
         start = ic if ic is not None else 0
