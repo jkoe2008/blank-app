@@ -1664,14 +1664,14 @@ if report.peak_pelvis_drop is not None and report.peak_pelvis_drop > T["max_safe
         flags.append(f"⚠️ Pelvis drop - {report.peak_pelvis_drop:.1f}°")
         recs.append("Pelvis drop indicates hip abductor weakness. Glute medius strengthening required.")
 
-    if report.max_lateral_trunk_lean is not None and report.max_lateral_trunk_lean > T["max_safe_trunk_lateral_deg"] and confidence_ok:
+if report.max_lateral_trunk_lean is not None and report.max_lateral_trunk_lean > T["max_safe_trunk_lateral_deg"] and confidence_ok:
         sev = (report.max_lateral_trunk_lean - T["max_safe_trunk_lateral_deg"]) / 20.0
         acl_score += 10 * min(sev, 1.0)
         gen_score += 8 * min(sev, 1.0)
         flags.append(f"⚠️ Lateral trunk lean - {report.max_lateral_trunk_lean:.1f}°")
         recs.append("Improve lateral core stability.")
 
-    if report.knee_flexion_asymmetry_pct is not None and report.knee_flexion_asymmetry_pct > T["max_safe_asymmetry_pct"] and confidence_ok:
+ if report.knee_flexion_asymmetry_pct is not None and report.knee_flexion_asymmetry_pct > T["max_safe_asymmetry_pct"] and confidence_ok:
         sev = (report.knee_flexion_asymmetry_pct - T["max_safe_asymmetry_pct"]) / 30.0
         gen_score += 10 * min(sev, 1.0)
         flags.append(f"⚠️ Bilateral asymmetry - {report.knee_flexion_asymmetry_pct:.1f}%")
