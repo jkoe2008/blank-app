@@ -1534,6 +1534,9 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
 
     measurement_quality_flags = []
 
+       measurement_quality_flags = []
+    suppress_ic_knee_scoring = False
+
     report.left_knee_flexion_at_IC = at_ic("left_knee_flexion")
     report.right_knee_flexion_at_IC = at_ic("right_knee_flexion")
 
@@ -1559,9 +1562,11 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
             )
 
         if left_ic_flex < 10 and right_ic_flex < 10:
+            suppress_ic_knee_scoring = True
             measurement_quality_flags.append(
-                "ℹ️ Bilateral knee flexion at IC is near-locked (<10° both sides). Treat IC knee flexion as low-confidence; verify video timing/capture before interpreting stiffness."
+                "ℹ️ Bilateral knee flexion at IC is near-locked (<10° both sides). IC knee-flexion scoring suppressed; repeat capture recommended before interpreting contact stiffness."
             )
+
 
     report.left_knee_flexion_peak = peak_min("left_knee_flexion")
     report.right_knee_flexion_peak = peak_min("right_knee_flexion")
@@ -1615,6 +1620,9 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     recs = []
     flags.extend(measurement_quality_flags)
     for side, val, col in [("Left", report.left_knee_flexion_at_IC, "left_knee_flexion"), ("Right", report.right_knee_flexion_at_IC, "right_knee_flexion")]:
+        if suppress_ic_knee_scoring:
+            continue
+
         if val is not None:
             flexion = 180 - val
             persistent = consecutive_abnormal(180 - safe_series(loading, col), T["min_safe_knee_flexion_IC"], "below", 2)
