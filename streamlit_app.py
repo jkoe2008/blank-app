@@ -1716,12 +1716,12 @@ if confidence_ok and not suppress_ic_knee_scoring and ic_flex_vals and valgus_va
                 "⚠️ Combined landing concern - stiff initial contact with excessive unilateral valgus"
             )
 
-    report.acl_risk_score = min(round(acl_score, 1), 100.0)
-    report.general_injury_risk_score = min(round(gen_score, 1), 100.0)
-    report.hybrid_score_details = {"used": False, "reason": "no labeled dataset model supplied"}
-    report = apply_hybrid_score(report, hybrid_model)
-    report.acl_risk_level = score_level(report.acl_risk_score)
-    report.general_risk_level = score_level(report.general_injury_risk_score)
+report.acl_risk_score = min(round(acl_score, 1), 100.0)
+report.general_injury_risk_score = min(round(gen_score, 1), 100.0)
+report.hybrid_score_details = {"used": False, "reason": "no labeled dataset model supplied"}
+report = apply_hybrid_score(report, hybrid_model)
+report.acl_risk_level = score_level(report.acl_risk_score)
+report.general_risk_level = score_level(report.general_injury_risk_score)
 
     if not any(f.startswith(("⚠️", "🚨")) for f in flags):
         flags.insert(0, "✅ No significant high-confidence biomechanical risk flags detected.")
