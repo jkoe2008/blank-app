@@ -1518,7 +1518,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
 
         if col in ["left_knee_flexion", "right_knee_flexion"]:
             # Raw knee angles that imply near-lockout at landing are likely tracking artifacts.
-            w = w[(w < 172) & (w > 90)]
+         w = w[(w < 160) & (w > 90)]
 
         return w.median() if not w.empty else None
     def peak_min(col, n=90):
@@ -1558,7 +1558,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     report.peak_pelvis_drop = peak_absmax("pelvis_drop")
     report.max_lateral_trunk_lean = df["lateral_trunk_lean"].abs().dropna().max()
     report.max_anterior_trunk_lean = df["anterior_trunk_lean"].dropna().max()
-    
+
     # ── Trunk lean: windowed to post-IC only ─────────────────────────────────
     # Previously used the full video, which contaminated results with
     # airborne-phase trunk position. Now gated to start at IC frame.
