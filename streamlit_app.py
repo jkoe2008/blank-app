@@ -1678,7 +1678,7 @@ if report.knee_flexion_asymmetry_pct is not None and report.knee_flexion_asymmet
         recs.append("Address asymmetry with unilateral training.")
 
     # Pattern escalation: stiff bilateral landing + unilateral valgus is clinically higher risk
-    ic_flex_vals = [
+ic_flex_vals = [
         180 - v for v in [
             report.left_knee_flexion_at_IC,
             report.right_knee_flexion_at_IC,
