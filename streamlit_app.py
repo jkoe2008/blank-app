@@ -1510,14 +1510,17 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         if ic is None:
             return None
 
-        w = df[col].iloc[max(0, ic - 4):ic + 5].dropna()
+        max_offset = int(0.15 * fps)
+        start = max(0, ic - max_offset)
+        end = min(len(df), ic + max_offset + 1)
+
+        w = df[col].iloc[start:end].dropna()
 
         if col in ["left_knee_flexion", "right_knee_flexion"]:
-            # Raw knee angle near full lockout at landing is likely a MediaPipe tracking artifact.
-            w = w[w < 172]
+            # Raw knee angles that imply near-lockout at landing are likely tracking artifacts.
+            w = w[(w < 172) & (w > 90)]
 
         return w.median() if not w.empty else None
-
     def peak_min(col, n=90):
         start = ic if ic is not None else 0
         w = df[col].iloc[start:start + n]
@@ -1533,6 +1536,8 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         w = df[col].iloc[start:start + n].dropna()
         return w.abs().max() if not w.empty else None
 
+    measurement_quality_flags = []
+
     report.left_knee_flexion_at_IC = at_ic("left_knee_flexion")
     report.right_knee_flexion_at_IC = at_ic("right_knee_flexion")
 
@@ -1540,15 +1545,10 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     r_flex = 180 - report.right_knee_flexion_at_IC if report.right_knee_flexion_at_IC is not None else None
 
     if l_flex is not None and r_flex is not None and abs(l_flex - r_flex) > 25:
-        if l_flex < r_flex:
-            report.left_knee_flexion_at_IC = None
-            report.flags.append("ℹ️ Left knee flexion at IC suppressed due to side-to-side tracking inconsistency.")
-        else:
-            report.right_knee_flexion_at_IC = None
-            report.flags.append("ℹ️ Right knee flexion at IC suppressed due to side-to-side tracking inconsistency.")
+        measurement_quality_flags.append(
+            "ℹ️ Knee flexion asymmetry at IC exceeds clinical plausibility for this bilateral landing. Repeat capture recommended before interpreting side-specific knee flexion."
+        )
 
-    report.left_knee_flexion_peak = peak_min("left_knee_flexion")
-    report.right_knee_flexion_peak = peak_min("right_knee_flexion")
     # ── Trunk lean: windowed to post-IC only ─────────────────────────────────
     # Previously used the full video, which contaminated results with
     # airborne-phase trunk position. Now gated to start at IC frame.
@@ -1589,7 +1589,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     gen_score = 0.0
     flags = []
     recs = []
-
+    flags.extend(measurement_quality_flags)
     for side, val, col in [("Left", report.left_knee_flexion_at_IC, "left_knee_flexion"), ("Right", report.right_knee_flexion_at_IC, "right_knee_flexion")]:
         if val is not None:
             flexion = 180 - val
