@@ -1515,14 +1515,6 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         if w.empty:
             return None
 
-        if col in ["left_knee_flexion", "right_knee_flexion"]:
-            valid_w = w[(w < 170) & (w > 90)]
-
-            if valid_w.empty:
-                return None
-
-            return float(valid_w.median())
-
         return float(w.median())
 
     def peak_min(col, n=90):
@@ -1545,13 +1537,26 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     report.left_knee_flexion_at_IC = at_ic("left_knee_flexion")
     report.right_knee_flexion_at_IC = at_ic("right_knee_flexion")
 
-    l_flex = 180 - report.left_knee_flexion_at_IC if report.left_knee_flexion_at_IC is not None else None
-    r_flex = 180 - report.right_knee_flexion_at_IC if report.right_knee_flexion_at_IC is not None else None
+    left_ic_raw = report.left_knee_flexion_at_IC
+    right_ic_raw = report.right_knee_flexion_at_IC
 
-    if l_flex is not None and r_flex is not None and abs(l_flex - r_flex) > 25:
-        measurement_quality_flags.append(
-            "ℹ️ Knee flexion asymmetry at IC exceeds clinical plausibility for this bilateral landing. Repeat capture recommended before interpreting side-specific knee flexion."
-        )
+    left_ic_flex = 180 - left_ic_raw if left_ic_raw is not None else None
+    right_ic_flex = 180 - right_ic_raw if right_ic_raw is not None else None
+
+    if left_ic_flex is not None and right_ic_flex is not None:
+        side_diff = abs(left_ic_flex - right_ic_flex)
+
+        if left_ic_raw > 170 and side_diff > 15:
+            report.left_knee_flexion_at_IC = None
+            measurement_quality_flags.append(
+                "ℹ️ Left knee flexion at IC not reportable due to likely tracking failure; repeat capture recommended."
+            )
+
+        if right_ic_raw > 170 and side_diff > 15:
+            report.right_knee_flexion_at_IC = None
+            measurement_quality_flags.append(
+                "ℹ️ Right knee flexion at IC not reportable due to likely tracking failure; repeat capture recommended."
+            )
 
     report.left_knee_flexion_peak = peak_min("left_knee_flexion")
     report.right_knee_flexion_peak = peak_min("right_knee_flexion")
