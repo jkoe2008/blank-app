@@ -873,7 +873,7 @@ POSE_CFG = dict(
 
 THRESHOLDS = {
     "min_safe_knee_flexion_IC": 30.0,
-    "min_safe_knee_flexion_peak": 50.0
+    "min_safe_knee_flexion_peak": 50.0,
     "max_safe_valgus_deg": 10.0,
     "max_safe_asymmetry_pct": 15.0,
     "max_safe_trunk_lateral_deg": 10.0,
