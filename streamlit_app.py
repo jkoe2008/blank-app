@@ -1533,8 +1533,6 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         return w.abs().max() if not w.empty else None
 
     measurement_quality_flags = []
-
-    measurement_quality_flags = []
     suppress_ic_knee_scoring = False
 
     report.left_knee_flexion_at_IC = at_ic("left_knee_flexion")
@@ -1645,17 +1643,19 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
                 flags.append(f"⚠️ {side} knee insufficient peak flexion - {peak_flex:.1f}°")
                 recs.append(f"Improve {side.lower()} knee flexion depth at landing.")
 
-    for side, val, col in [("Left", report.peak_left_valgus, "left_knee_valgus_2d"), ("Right", report.peak_right_valgus, "right_knee_valgus_2d")]:
-        if val is not None:
-            persistent = consecutive_abnormal(safe_series(loading, col), T["max_safe_valgus_deg"], "above", 2)
-            if val > T["max_safe_valgus_deg"] and persistent and confidence_ok:
-                sev = (val - T["max_safe_valgus_deg"]) / 20.0
-                acl_score += 15 * min(sev, 1.0)
-                gen_score += 12 * min(sev, 1.0)
-                flags.append(f"🚨 {side} 2D valgus - {val:.1f}° inward collapse")
-                recs.append(f"PRIORITY: {side} valgus control. Strengthen hip abductors. Consider PEP or FIFA 11+.")
-            elif val > T["max_safe_valgus_deg"]:
-                flags.append(f"ℹ️ {side} valgus signal suppressed due to confidence/persistence gating.")
+for side, val, col in [("Left", report.peak_left_valgus, "left_knee_valgus_2d"), 
+                        ("Right", report.peak_right_valgus, "right_knee_valgus_2d")]:
+    if val is not None:
+        # Use same 90-frame window as peak_max, not the narrow loading window
+        peak_start = ic if ic is not None else 0
+        valgus_series = safe_series(
+            df.iloc[peak_start : peak_start + 90], col
+        )
+        persistent = consecutive_abnormal(
+            valgus_series, T["max_safe_valgus_deg"], "above", 2
+        )
+        if val > T["max_safe_valgus_deg"] and persistent and confidence_ok:
+            ...
 
     if report.peak_pelvis_drop is not None and report.peak_pelvis_drop > T["max_safe_pelvis_drop_deg"] and confidence_ok:
         sev = (report.peak_pelvis_drop - T["max_safe_pelvis_drop_deg"]) / 15.0
