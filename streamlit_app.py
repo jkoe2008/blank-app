@@ -1537,7 +1537,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     report.left_knee_flexion_at_IC = at_ic("left_knee_flexion")
     report.right_knee_flexion_at_IC = at_ic("right_knee_flexion")
 
-       left_ic_raw = report.left_knee_flexion_at_IC
+    left_ic_raw = report.left_knee_flexion_at_IC
     right_ic_raw = report.right_knee_flexion_at_IC
 
     left_ic_flex = 180 - left_ic_raw if left_ic_raw is not None else None
@@ -1562,7 +1562,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
             measurement_quality_flags.append(
                 "ℹ️ Bilateral knee flexion at IC is near-locked (<10° both sides). Treat IC knee flexion as low-confidence; verify video timing/capture before interpreting stiffness."
             )
-            
+
     report.left_knee_flexion_peak = peak_min("left_knee_flexion")
     report.right_knee_flexion_peak = peak_min("right_knee_flexion")
     report.left_hip_flexion_at_IC = at_ic("left_hip_flexion")
