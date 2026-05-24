@@ -1506,7 +1506,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     report.ic_vote_details = vote_details
     report.phase_windows = get_phase_windows(ic, fps, len(df))
 
-     def at_ic(col):
+    def at_ic(col):
         if ic is None or col not in df.columns:
             return None
 
@@ -1517,10 +1517,8 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
 
         if col in ["left_knee_flexion", "right_knee_flexion"]:
             valid_w = w[(w < 160) & (w > 90)]
-
             if valid_w.empty:
                 return None
-
             return float(valid_w.median())
 
         return float(w.median())
