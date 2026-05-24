@@ -1686,7 +1686,7 @@ ic_flex_vals = [
         if v is not None
     ]
 
-    valgus_vals = [
+valgus_vals = [
         v for v in [
             report.peak_left_valgus,
             report.peak_right_valgus,
