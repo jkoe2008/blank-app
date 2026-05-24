@@ -1738,7 +1738,7 @@ for side, val, col in [("Left", report.peak_left_valgus, "left_knee_valgus_2d"),
     if report.failure_flags:
         report.flags.insert(0, "ℹ️ Analysis quality warning: review failure detection before interpreting risk.")
 
-     return report, df
+return report, df
 
 def build_clinical_intake(patient_age, sport, competition_level, dominant_limb, involved_limb, prior_acl, surgery_history, pain_score, swelling, instability, rts_phase, clinician_notes):
     return {
