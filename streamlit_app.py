@@ -1694,7 +1694,7 @@ valgus_vals = [
         if v is not None
     ]
 
-    if confidence_ok and not suppress_ic_knee_scoring and ic_flex_vals and valgus_vals:
+if confidence_ok and not suppress_ic_knee_scoring and ic_flex_vals and valgus_vals:
         min_ic_flex = min(ic_flex_vals)
         max_ic_flex = max(ic_flex_vals)
         max_valgus = max(valgus_vals)
