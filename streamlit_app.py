@@ -873,7 +873,7 @@ POSE_CFG = dict(
 
 THRESHOLDS = {
     "min_safe_knee_flexion_IC": 30.0,
-    "min_safe_knee_flexion_peak": 60.0,
+    "min_safe_knee_flexion_peak": 50.0
     "max_safe_valgus_deg": 10.0,
     "max_safe_asymmetry_pct": 15.0,
     "max_safe_trunk_lateral_deg": 10.0,
@@ -1694,7 +1694,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         if v is not None
     ]
 
-    if confidence_ok and ic_flex_vals and valgus_vals:
+    if confidence_ok and not suppress_ic_knee_scoring and ic_flex_vals and valgus_vals:
         min_ic_flex = min(ic_flex_vals)
         max_ic_flex = max(ic_flex_vals)
         max_valgus = max(valgus_vals)
