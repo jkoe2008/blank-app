@@ -1723,7 +1723,7 @@ report = apply_hybrid_score(report, hybrid_model)
 report.acl_risk_level = score_level(report.acl_risk_score)
 report.general_risk_level = score_level(report.general_injury_risk_score)
 
-    if not any(f.startswith(("⚠️", "🚨")) for f in flags):
+if not any(f.startswith(("⚠️", "🚨")) for f in flags):
         flags.insert(0, "✅ No significant high-confidence biomechanical risk flags detected.")
         recs.append("Maintain current landing mechanics.")
 
