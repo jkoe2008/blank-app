@@ -1549,6 +1549,16 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
             "ℹ️ Knee flexion asymmetry at IC exceeds clinical plausibility for this bilateral landing. Repeat capture recommended before interpreting side-specific knee flexion."
         )
 
+    report.left_knee_flexion_peak = peak_min("left_knee_flexion")
+    report.right_knee_flexion_peak = peak_min("right_knee_flexion")
+    report.left_hip_flexion_at_IC = at_ic("left_hip_flexion")
+    report.right_hip_flexion_at_IC = at_ic("right_hip_flexion")
+    report.peak_left_valgus = peak_max("left_knee_valgus_2d")
+    report.peak_right_valgus = peak_max("right_knee_valgus_2d")
+    report.peak_pelvis_drop = peak_absmax("pelvis_drop")
+    report.max_lateral_trunk_lean = df["lateral_trunk_lean"].abs().dropna().max()
+    report.max_anterior_trunk_lean = df["anterior_trunk_lean"].dropna().max()
+    
     # ── Trunk lean: windowed to post-IC only ─────────────────────────────────
     # Previously used the full video, which contaminated results with
     # airborne-phase trunk position. Now gated to start at IC frame.
