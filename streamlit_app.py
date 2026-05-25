@@ -1610,7 +1610,8 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         df["pelvis_drop_smooth"] = fill_smooth(pelvis_series.to_numpy(dtype=float))
         report.peak_pelvis_drop = peak_absmax("pelvis_drop_smooth", percentile=90)
     else:
-report.peak_pelvis_drop = None
+
+        report.peak_pelvis_drop = None
 
     # Trunk lean: windowed to post-IC only
     post_ic_start = ic if ic is not None else 0
