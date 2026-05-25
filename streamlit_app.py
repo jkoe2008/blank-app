@@ -874,7 +874,7 @@ POSE_CFG = dict(
 THRESHOLDS = {
     "min_safe_knee_flexion_IC": 30.0,
     "min_safe_knee_flexion_peak": 50.0,   # lowered from 60 - single-camera MediaPipe underestimates
-    "max_safe_valgus_deg": 10.0,
+    "max_safe_valgus_deg": 5.0,
     "max_safe_asymmetry_pct": 15.0,
     "max_safe_trunk_lateral_deg": 10.0,
     "max_safe_pelvis_drop_deg": 8.0,
@@ -975,7 +975,7 @@ def valgus_2d_frontal(hip, knee, ankle):
     expected_x = hip[0] + t * (ankle[0] - hip[0])
     deviation_x = knee[0] - expected_x
     leg_length = np.linalg.norm(ankle - hip) + 1e-9
-    angle = np.degrees(np.arctan2(abs(deviation_x), leg_length * 0.5))
+    angle = np.degrees(np.arctan2(abs(deviation_x), leg_length))
     return float(np.sign(deviation_x) * angle)
 
 def pelvis_drop_2d(l_hip, r_hip):
@@ -1091,7 +1091,7 @@ def detect_initial_contact_voting(df, fps):
     }
 
 
-def consecutive_abnormal(series, threshold, direction="above", min_frames=2):
+def consecutive_abnormal(series, threshold, direction="above", min_frames=4):
     s = pd.to_numeric(series, errors="coerce").dropna()
     if s.empty:
         return False
