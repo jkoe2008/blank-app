@@ -873,7 +873,7 @@ POSE_CFG = dict(
 
 THRESHOLDS = {
     "min_safe_knee_flexion_IC": 30.0,
-    "min_safe_knee_flexion_peak": 50.0,
+    "min_safe_knee_flexion_peak": 50.0,   # lowered from 60 - single-camera MediaPipe underestimates
     "max_safe_valgus_deg": 10.0,
     "max_safe_asymmetry_pct": 15.0,
     "max_safe_trunk_lateral_deg": 10.0,
@@ -1020,19 +1020,6 @@ def fill_smooth(values):
     return y
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# IC DETECTION  —  v2: deceleration-event voting
-#
-# Conceptual fix: IC is NOT the peak of downward velocity (that happens mid-air).
-# IC is when downward velocity STOPS — a deceleration event.
-#
-# Three signals:
-#   1. ankle_plant      → ankle vertical deceleration peak after sustained descent
-#   2. knee_flexion_onset → first sustained onset of rapid knee bending
-#   3. com_deceleration → COM vertical deceleration peak after sustained descent
-#
-# Median vote across whichever signals fire.
-# ─────────────────────────────────────────────────────────────────────────────
 def detect_initial_contact_voting(df, fps):
     min_frames = max(8, int(0.25 * fps))
     if len(df) < min_frames:
@@ -1041,17 +1028,12 @@ def detect_initial_contact_voting(df, fps):
     from scipy.signal import find_peaks
     votes = {}
 
-    # ── Signal 1: Ankle plant ────────────────────────────────────────────────
-    # MediaPipe y increases downward (0 = top of frame).
-    # During fall: ankle_y increases (vel > 0).
-    # At IC: ankle_y stops increasing → velocity drops to ~0 → large deceleration.
-    # Detect the first significant deceleration peak that follows a real descent.
     ankle_y = df[["left_ankle_y", "right_ankle_y"]].mean(axis=1).to_numpy(dtype=float)
     ankle_y = fill_smooth(ankle_y)
     if not np.isnan(ankle_y).all():
         vel = fill_smooth(np.gradient(ankle_y))
         accel = np.gradient(vel)
-        decel = -accel   # flip so deceleration events are peaks
+        decel = -accel
         prom_floor = 0.03 * max(np.nanmax(decel) - np.nanmin(decel), 1e-9)
         peaks, _ = find_peaks(
             decel,
@@ -1059,17 +1041,11 @@ def detect_initial_contact_voting(df, fps):
             distance=max(3, int(0.05 * fps)),
         )
         for p in peaks:
-            # Require that the preceding window had meaningful downward velocity
             pre = vel[max(0, p - int(0.15 * fps)):p]
             if len(pre) > 0 and np.nanmean(pre) > 1e-3:
                 votes["ankle_plant"] = int(p)
                 break
 
-    # ── Signal 2: Knee flexion onset ─────────────────────────────────────────
-    # Before IC the knee is relatively straight and stable.
-    # At IC the knee starts bending rapidly.
-    # Find the first frame where bending rate exceeds 15 % of its peak,
-    # sustained for at least 2 consecutive frames.
     lk = 180 - safe_series(df, "left_knee_flexion")
     rk = 180 - safe_series(df, "right_knee_flexion")
     knee_flex = fill_smooth(
@@ -1082,13 +1058,10 @@ def detect_initial_contact_voting(df, fps):
             onset_thresh = 0.15 * max_rate
             above = flex_rate > onset_thresh
             for i in range(len(above) - 2):
-                if above[i] and above[i + 1]:   # sustained ≥ 2 frames
+                if above[i] and above[i + 1]:
                     votes["knee_flexion_onset"] = int(i)
                     break
 
-    # ── Signal 3: COM deceleration ───────────────────────────────────────────
-    # COM continues to drop after IC (knees flex) but the rate of descent slows.
-    # IC = first significant deceleration of COM after sustained descent.
     com_y = fill_smooth(safe_series(df, "com_y").to_numpy(dtype=float))
     if not np.isnan(com_y).all():
         vel = fill_smooth(np.gradient(com_y))
@@ -1509,12 +1482,9 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     def at_ic(col):
         if ic is None or col not in df.columns:
             return None
-
         w = df[col].iloc[max(0, ic - 2): min(len(df), ic + 3)].dropna()
-
         if w.empty:
             return None
-
         return float(w.median())
 
     def peak_min(col, n=90):
@@ -1565,7 +1535,6 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
                 "ℹ️ Bilateral knee flexion at IC is near-locked (<10° both sides). IC knee-flexion scoring suppressed; repeat capture recommended before interpreting contact stiffness."
             )
 
-
     report.left_knee_flexion_peak = peak_min("left_knee_flexion")
     report.right_knee_flexion_peak = peak_min("right_knee_flexion")
     report.left_hip_flexion_at_IC = at_ic("left_hip_flexion")
@@ -1573,12 +1542,8 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     report.peak_left_valgus = peak_max("left_knee_valgus_2d")
     report.peak_right_valgus = peak_max("right_knee_valgus_2d")
     report.peak_pelvis_drop = peak_absmax("pelvis_drop")
-    report.max_lateral_trunk_lean = df["lateral_trunk_lean"].abs().dropna().max()
-    report.max_anterior_trunk_lean = df["anterior_trunk_lean"].dropna().max()
 
-    # ── Trunk lean: windowed to post-IC only ─────────────────────────────────
-    # Previously used the full video, which contaminated results with
-    # airborne-phase trunk position. Now gated to start at IC frame.
+    # Trunk lean: windowed to post-IC only
     post_ic_start = ic if ic is not None else 0
     post_ic_df = df.iloc[post_ic_start:]
     report.max_lateral_trunk_lean = (
@@ -1610,19 +1575,21 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         "units": "body-relative normalized image units",
     }
 
-    loading = phase_slice(df, report.phase_windows, "loading_0_200ms")
     confidence_ok = report.mean_visibility >= 0.65 and report.pose_detection_rate >= 0.70
     acl_score = 0.0
     gen_score = 0.0
     flags = []
     recs = []
     flags.extend(measurement_quality_flags)
-    for side, val, col in [("Left", report.left_knee_flexion_at_IC, "left_knee_flexion"), ("Right", report.right_knee_flexion_at_IC, "right_knee_flexion")]:
+
+    # IC knee flexion scoring
+    for side, val, col in [("Left", report.left_knee_flexion_at_IC, "left_knee_flexion"),
+                            ("Right", report.right_knee_flexion_at_IC, "right_knee_flexion")]:
         if suppress_ic_knee_scoring:
             continue
-
         if val is not None:
             flexion = 180 - val
+            loading = phase_slice(df, report.phase_windows, "loading_0_200ms")
             persistent = consecutive_abnormal(180 - safe_series(loading, col), T["min_safe_knee_flexion_IC"], "below", 2)
             if flexion < T["min_safe_knee_flexion_IC"] and persistent and confidence_ok:
                 sev = (T["min_safe_knee_flexion_IC"] - flexion) / T["min_safe_knee_flexion_IC"]
@@ -1633,6 +1600,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
             elif flexion < T["min_safe_knee_flexion_IC"]:
                 flags.append(f"ℹ️ {side} stiff landing signal suppressed due to confidence/persistence gating.")
 
+    # Peak flexion scoring (threshold lowered to 50° for single-camera MediaPipe)
     for side, val in [("Left", report.left_knee_flexion_peak), ("Right", report.right_knee_flexion_peak)]:
         if val is not None:
             peak_flex = 180 - val
@@ -1643,42 +1611,44 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
                 flags.append(f"⚠️ {side} knee insufficient peak flexion - {peak_flex:.1f}°")
                 recs.append(f"Improve {side.lower()} knee flexion depth at landing.")
 
-for side, val, col in [("Left", report.peak_left_valgus, "left_knee_valgus_2d"), 
-                        ("Right", report.peak_right_valgus, "right_knee_valgus_2d")]:
-    if val is not None:
-        # Use same 90-frame window as peak_max, not the narrow loading window
-        peak_start = ic if ic is not None else 0
-        valgus_series = safe_series(
-            df.iloc[peak_start : peak_start + 90], col
-        )
-        persistent = consecutive_abnormal(
-            valgus_series, T["max_safe_valgus_deg"], "above", 2
-        )
-        if val > T["max_safe_valgus_deg"] and persistent and confidence_ok:
-            ...
+    # Valgus scoring — persistence window matches peak detection window (90 frames)
+    for side, val, col in [("Left", report.peak_left_valgus, "left_knee_valgus_2d"),
+                            ("Right", report.peak_right_valgus, "right_knee_valgus_2d")]:
+        if val is not None:
+            peak_start = ic if ic is not None else 0
+            valgus_series = safe_series(df.iloc[peak_start:peak_start + 90], col)
+            persistent = consecutive_abnormal(valgus_series, T["max_safe_valgus_deg"], "above", 2)
+            if val > T["max_safe_valgus_deg"] and persistent and confidence_ok:
+                sev = (val - T["max_safe_valgus_deg"]) / 20.0
+                acl_score += 15 * min(sev, 1.0)
+                gen_score += 12 * min(sev, 1.0)
+                flags.append(f"🚨 {side} 2D valgus - {val:.1f}° inward collapse")
+                recs.append(f"PRIORITY: {side} valgus control. Strengthen hip abductors. Consider PEP or FIFA 11+.")
+            elif val > T["max_safe_valgus_deg"]:
+                flags.append(f"ℹ️ {side} valgus signal suppressed due to confidence/persistence gating.")
 
-if report.peak_pelvis_drop is not None and report.peak_pelvis_drop > T["max_safe_pelvis_drop_deg"] and confidence_ok:
+    if report.peak_pelvis_drop is not None and report.peak_pelvis_drop > T["max_safe_pelvis_drop_deg"] and confidence_ok:
         sev = (report.peak_pelvis_drop - T["max_safe_pelvis_drop_deg"]) / 15.0
         acl_score += 8 * min(sev, 1.0)
         gen_score += 8 * min(sev, 1.0)
         flags.append(f"⚠️ Pelvis drop - {report.peak_pelvis_drop:.1f}°")
         recs.append("Pelvis drop indicates hip abductor weakness. Glute medius strengthening required.")
 
-if report.max_lateral_trunk_lean is not None and report.max_lateral_trunk_lean > T["max_safe_trunk_lateral_deg"] and confidence_ok:
+    if report.max_lateral_trunk_lean is not None and report.max_lateral_trunk_lean > T["max_safe_trunk_lateral_deg"] and confidence_ok:
         sev = (report.max_lateral_trunk_lean - T["max_safe_trunk_lateral_deg"]) / 20.0
         acl_score += 10 * min(sev, 1.0)
         gen_score += 8 * min(sev, 1.0)
         flags.append(f"⚠️ Lateral trunk lean - {report.max_lateral_trunk_lean:.1f}°")
         recs.append("Improve lateral core stability.")
 
-if report.knee_flexion_asymmetry_pct is not None and report.knee_flexion_asymmetry_pct > T["max_safe_asymmetry_pct"] and confidence_ok:
+    if report.knee_flexion_asymmetry_pct is not None and report.knee_flexion_asymmetry_pct > T["max_safe_asymmetry_pct"] and confidence_ok:
         sev = (report.knee_flexion_asymmetry_pct - T["max_safe_asymmetry_pct"]) / 30.0
         gen_score += 10 * min(sev, 1.0)
         flags.append(f"⚠️ Bilateral asymmetry - {report.knee_flexion_asymmetry_pct:.1f}%")
         recs.append("Address asymmetry with unilateral training.")
 
     # Pattern escalation: stiff bilateral landing + unilateral valgus is clinically higher risk
-ic_flex_vals = [
+    ic_flex_vals = [
         180 - v for v in [
             report.left_knee_flexion_at_IC,
             report.right_knee_flexion_at_IC,
@@ -1686,7 +1656,7 @@ ic_flex_vals = [
         if v is not None
     ]
 
-valgus_vals = [
+    valgus_vals = [
         v for v in [
             report.peak_left_valgus,
             report.peak_right_valgus,
@@ -1694,7 +1664,7 @@ valgus_vals = [
         if v is not None
     ]
 
-if confidence_ok and not suppress_ic_knee_scoring and ic_flex_vals and valgus_vals:
+    if confidence_ok and not suppress_ic_knee_scoring and ic_flex_vals and valgus_vals:
         min_ic_flex = min(ic_flex_vals)
         max_ic_flex = max(ic_flex_vals)
         max_valgus = max(valgus_vals)
@@ -1716,14 +1686,14 @@ if confidence_ok and not suppress_ic_knee_scoring and ic_flex_vals and valgus_va
                 "⚠️ Combined landing concern - stiff initial contact with excessive unilateral valgus"
             )
 
-report.acl_risk_score = min(round(acl_score, 1), 100.0)
-report.general_injury_risk_score = min(round(gen_score, 1), 100.0)
-report.hybrid_score_details = {"used": False, "reason": "no labeled dataset model supplied"}
-report = apply_hybrid_score(report, hybrid_model)
-report.acl_risk_level = score_level(report.acl_risk_score)
-report.general_risk_level = score_level(report.general_injury_risk_score)
+    report.acl_risk_score = min(round(acl_score, 1), 100.0)
+    report.general_injury_risk_score = min(round(gen_score, 1), 100.0)
+    report.hybrid_score_details = {"used": False, "reason": "no labeled dataset model supplied"}
+    report = apply_hybrid_score(report, hybrid_model)
+    report.acl_risk_level = score_level(report.acl_risk_score)
+    report.general_risk_level = score_level(report.general_injury_risk_score)
 
-if not any(f.startswith(("⚠️", "🚨")) for f in flags):
+    if not any(f.startswith(("⚠️", "🚨")) for f in flags):
         flags.insert(0, "✅ No significant high-confidence biomechanical risk flags detected.")
         recs.append("Maintain current landing mechanics.")
 
@@ -2422,7 +2392,7 @@ def display_result_strip(report):
     """, unsafe_allow_html=True)
 
 def main():
-    st.caption("Version: 2D-ONLY-v4 | IC Detection: deceleration-event voting | Trunk lean: post-IC windowed")
+    st.caption("Version: 2D-ONLY-v5 | IC Detection: deceleration-event voting | Valgus: 90-frame persistence window | Peak flex threshold: 50°")
     display_premium_header()
 
     if "analysis_done" not in st.session_state:
