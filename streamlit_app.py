@@ -1580,7 +1580,7 @@ right_ic_raw = report.right_knee_flexion_at_IC
 left_ic_flex = 180 - left_ic_raw if left_ic_raw is not None else None
 right_ic_flex = 180 - right_ic_raw if right_ic_raw is not None else None
 
-if left_ic_flex is not None and right_ic_flex is not None:
+    if left_ic_flex is not None and right_ic_flex is not None:
         side_diff = abs(left_ic_flex - right_ic_flex)
 
         if left_ic_raw > 170 and side_diff > 15:
@@ -1601,21 +1601,21 @@ if left_ic_flex is not None and right_ic_flex is not None:
                 "ℹ️ Bilateral knee flexion at IC is near-locked (<10° both sides). IC knee-flexion scoring suppressed; repeat capture recommended before interpreting contact stiffness."
             )
 
-report.left_knee_flexion_peak = peak_min("left_knee_flexion")
-report.right_knee_flexion_peak = peak_min("right_knee_flexion")
-report.left_hip_flexion_at_IC = at_ic("left_hip_flexion")
-report.right_hip_flexion_at_IC = at_ic("right_hip_flexion")
-report.peak_left_valgus = peak_max("left_knee_valgus_2d")
-report.peak_right_valgus = peak_max("right_knee_valgus_2d")
+    report.left_knee_flexion_peak = peak_min("left_knee_flexion")
+    report.right_knee_flexion_peak = peak_min("right_knee_flexion")
+    report.left_hip_flexion_at_IC = at_ic("left_hip_flexion")
+    report.right_hip_flexion_at_IC = at_ic("right_hip_flexion")
+    report.peak_left_valgus = peak_max("left_knee_valgus_2d")
+    report.peak_right_valgus = peak_max("right_knee_valgus_2d")
 
-if "pelvis_drop" in df.columns:
+    if "pelvis_drop" in df.columns:
         pelvis_start = ic if ic is not None else 0
         pelvis_series = safe_series(df, "pelvis_drop")
         df["pelvis_drop_smooth"] = fill_smooth(pelvis_series.to_numpy(dtype=float))
 
         pelvis_window = pd.to_numeric(
             df["pelvis_drop_smooth"].iloc[pelvis_start:pelvis_start + 90],
-            errors="coerce"
+            errors="coerce",
         ).dropna().abs()
 
         report.peak_pelvis_drop = (
@@ -1623,40 +1623,38 @@ if "pelvis_drop" in df.columns:
             if not pelvis_window.empty
             else None
         )
-else:
+    else:
         report.peak_pelvis_drop = None
 
     # Trunk lean: windowed to post-IC only
-post_ic_start = ic if ic is not None else 0
-post_ic_df = df.iloc[post_ic_start:]
-report.max_lateral_trunk_lean = (
-post_ic_df["lateral_trunk_lean"].abs().dropna().max()
+    post_ic_start = ic if ic is not None else 0
+    post_ic_df = df.iloc[post_ic_start:]
+
+    report.max_lateral_trunk_lean = (
+        post_ic_df["lateral_trunk_lean"].abs().dropna().max()
         if not post_ic_df.empty and "lateral_trunk_lean" in post_ic_df.columns
         else None
     )
-report.max_anterior_trunk_lean = (
-post_ic_df["anterior_trunk_lean"].dropna().max()
+
+    report.max_anterior_trunk_lean = (
+        post_ic_df["anterior_trunk_lean"].dropna().max()
         if not post_ic_df.empty and "anterior_trunk_lean" in post_ic_df.columns
         else None
     )
 
-if report.left_knee_flexion_at_IC is not None and report.right_knee_flexion_at_IC is not None:
-        left_flex = 180 - report.left_knee_flexion_at_IC
-        right_flex = 180 - report.right_knee_flexion_at_IC
-        denom = (left_flex + right_flex) / 2
-        if denom > 0:
-            report.knee_flexion_asymmetry_pct = abs(left_flex - right_flex) / denom * 100
-        
+    if report.left_knee_flexion_at_IC is not None and report.right_knee_flexion_at_IC is not None:
         left_flex = 180 - report.left_knee_flexion_at_IC
         right_flex = 180 - report.right_knee_flexion_at_IC
         denom = (left_flex + right_flex) / 2
         if denom > 0:
             report.knee_flexion_asymmetry_pct = abs(left_flex - right_flex) / denom * 100
 
-if ic is not None:
+    if ic is not None and "left_knee_flexion" in df.columns:
         window = df["left_knee_flexion"].iloc[max(0, ic - 3):ic + 8].dropna()
         if len(window) >= 2:
-            report.landing_stiffness_index = abs((window.iloc[-1] - window.iloc[0]) / ((len(window) - 1) / fps))
+            report.landing_stiffness_index = abs(
+                (window.iloc[-1] - window.iloc[0]) / ((len(window) - 1) / fps)
+            )
 
     report.temporal_features = compute_temporal_features(df, ic, fps)
     report.normalization_summary = {
