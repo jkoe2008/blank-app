@@ -2628,6 +2628,38 @@ def main():
             st.write(f"Right knee flexion at IC: {report.right_knee_flexion_at_IC}")
             st.write(f"Left valgus peak: {report.peak_left_valgus}")
             st.write(f"Right valgus peak: {report.peak_right_valgus}")
+            st.write(f"Pelvis peak reported: {report.peak_pelvis_drop}")
+
+            if "pelvis_drop" in df.columns:
+                pelvis_diag_start = report.ic_frame if report.ic_frame is not None else 0
+                pelvis_diag = pd.to_numeric(
+                    df["pelvis_drop"].iloc[pelvis_diag_start:pelvis_diag_start + 90],
+                    errors="coerce"
+                ).dropna().abs()
+
+                if not pelvis_diag.empty:
+                    st.write({
+                        "pelvis_raw_max": float(pelvis_diag.max()),
+                        "pelvis_raw_p95": float(np.nanpercentile(pelvis_diag, 95)),
+                        "pelvis_raw_p90": float(np.nanpercentile(pelvis_diag, 90)),
+                        "pelvis_raw_median": float(pelvis_diag.median()),
+                    })
+
+            if "pelvis_drop_smooth" in df.columns:
+                pelvis_diag_start = report.ic_frame if report.ic_frame is not None else 0
+                pelvis_smooth_diag = pd.to_numeric(
+                    df["pelvis_drop_smooth"].iloc[pelvis_diag_start:pelvis_diag_start + 90],
+                    errors="coerce"
+                ).dropna().abs()
+
+                if not pelvis_smooth_diag.empty:
+                    st.write({
+                        "pelvis_smooth_max": float(pelvis_smooth_diag.max()),
+                        "pelvis_smooth_p95": float(np.nanpercentile(pelvis_smooth_diag, 95)),
+                        "pelvis_smooth_p90": float(np.nanpercentile(pelvis_smooth_diag, 90)),
+                        "pelvis_smooth_median": float(pelvis_smooth_diag.median()),
+                    })
+
             st.write(f"IC frame detected: {report.ic_frame}")
             st.write(f"IC vote details: {report.ic_vote_details}")
             st.write(df.head(10))
