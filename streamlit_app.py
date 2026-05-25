@@ -1568,17 +1568,17 @@ def peak_absmax(col, n=90, percentile=95):
             return None
         return float(np.nanpercentile(w.abs(), percentile))
 
-measurement_quality_flags = []
-suppress_ic_knee_scoring = False
+    measurement_quality_flags = []
+    suppress_ic_knee_scoring = False
 
-report.left_knee_flexion_at_IC = at_ic("left_knee_flexion")
-report.right_knee_flexion_at_IC = at_ic("right_knee_flexion")
+    report.left_knee_flexion_at_IC = at_ic("left_knee_flexion")
+    report.right_knee_flexion_at_IC = at_ic("right_knee_flexion")
 
-left_ic_raw = report.left_knee_flexion_at_IC
-right_ic_raw = report.right_knee_flexion_at_IC
+    left_ic_raw = report.left_knee_flexion_at_IC
+    right_ic_raw = report.right_knee_flexion_at_IC
 
-left_ic_flex = 180 - left_ic_raw if left_ic_raw is not None else None
-right_ic_flex = 180 - right_ic_raw if right_ic_raw is not None else None
+    left_ic_flex = 180 - left_ic_raw if left_ic_raw is not None else None
+    right_ic_flex = 180 - right_ic_raw if right_ic_raw is not None else None
 
     if left_ic_flex is not None and right_ic_flex is not None:
         side_diff = abs(left_ic_flex - right_ic_flex)
@@ -1626,7 +1626,6 @@ right_ic_flex = 180 - right_ic_raw if right_ic_raw is not None else None
     else:
         report.peak_pelvis_drop = None
 
-    # Trunk lean: windowed to post-IC only
     post_ic_start = ic if ic is not None else 0
     post_ic_df = df.iloc[post_ic_start:]
 
