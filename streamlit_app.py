@@ -1605,7 +1605,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     report.peak_left_valgus = peak_max("left_knee_valgus_2d")
     report.peak_right_valgus = peak_max("right_knee_valgus_2d")
      
- if "pelvis_drop" in df.columns:
+        if "pelvis_drop" in df.columns:
         pelvis_series = safe_series(df, "pelvis_drop")
         df["pelvis_drop_smooth"] = fill_smooth(pelvis_series.to_numpy(dtype=float))
         report.peak_pelvis_drop = peak_absmax("pelvis_drop_smooth", percentile=90)
