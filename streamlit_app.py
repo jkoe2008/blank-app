@@ -1528,22 +1528,22 @@ def validate_dataset(history_df):
 def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=None, baseline_df=None):
     report = RiskReport(camera_angle=cam_angle, camera_confidence=cam_conf)
     df = pd.DataFrame([asdict(r) for r in records])
-T = THRESHOLDS
-view = (cam_angle or "frontal").lower()
-score_frontal = view == "frontal"
-score_sagittal = view == "side"
+    T = THRESHOLDS
+    view = (cam_angle or "frontal").lower()
+    score_frontal = view == "frontal"
+    score_sagittal = view == "side"
 
-report.pose_detection_rate = float(df["pose_detected"].mean()) if not df.empty else 0.0
-report.mean_visibility = float(df["mean_landmark_visibility"].dropna().mean()) if not df["mean_landmark_visibility"].dropna().empty else 0.0
+    report.pose_detection_rate = float(df["pose_detected"].mean()) if not df.empty else 0.0
+    report.mean_visibility = float(df["mean_landmark_visibility"].dropna().mean()) if not df["mean_landmark_visibility"].dropna().empty else 0.0
 
-ic, vote_details = detect_initial_contact_voting(df, fps)
-report.ic_frame = ic
-report.ic_time_s = ic / fps if ic is not None else None
-report.ic_detection_method = vote_details.get("method", "deceleration-event voting v2")
-report.ic_vote_details = vote_details
-report.phase_windows = get_phase_windows(ic, fps, len(df))
+    ic, vote_details = detect_initial_contact_voting(df, fps)
+    report.ic_frame = ic
+    report.ic_time_s = ic / fps if ic is not None else None
+    report.ic_detection_method = vote_details.get("method", "deceleration-event voting v2")
+    report.ic_vote_details = vote_details
+    report.phase_windows = get_phase_windows(ic, fps, len(df))
 
-def at_ic(col):
+    def at_ic(col):
         if ic is None or col not in df.columns:
             return None
         w = df[col].iloc[max(0, ic - 2): min(len(df), ic + 3)].dropna()
@@ -1551,22 +1551,15 @@ def at_ic(col):
             return None
         return float(w.median())
 
-def peak_min(col, n=90):
+    def peak_min(col, n=90):
         start = ic if ic is not None else 0
         w = df[col].iloc[start:start + n]
         return w.dropna().min() if not w.dropna().empty else None
 
-def peak_max(col, n=90):
+    def peak_max(col, n=90):
         start = ic if ic is not None else 0
         w = df[col].iloc[start:start + n]
         return w.dropna().max() if not w.dropna().empty else None
-
-def peak_absmax(col, n=90, percentile=95):
-        start = ic if ic is not None else 0
-        w = df[col].iloc[start:start + n].dropna()
-        if w.empty:
-            return None
-        return float(np.nanpercentile(w.abs(), percentile))
 
     measurement_quality_flags = []
     suppress_ic_knee_scoring = False
@@ -1576,7 +1569,6 @@ def peak_absmax(col, n=90, percentile=95):
 
     left_ic_raw = report.left_knee_flexion_at_IC
     right_ic_raw = report.right_knee_flexion_at_IC
-
     left_ic_flex = 180 - left_ic_raw if left_ic_raw is not None else None
     right_ic_flex = 180 - right_ic_raw if right_ic_raw is not None else None
 
@@ -1612,17 +1604,11 @@ def peak_absmax(col, n=90, percentile=95):
         pelvis_start = ic if ic is not None else 0
         pelvis_series = safe_series(df, "pelvis_drop")
         df["pelvis_drop_smooth"] = fill_smooth(pelvis_series.to_numpy(dtype=float))
-
         pelvis_window = pd.to_numeric(
             df["pelvis_drop_smooth"].iloc[pelvis_start:pelvis_start + 90],
             errors="coerce",
         ).dropna().abs()
-
-        report.peak_pelvis_drop = (
-            float(np.nanpercentile(pelvis_window, 90))
-            if not pelvis_window.empty
-            else None
-        )
+        report.peak_pelvis_drop = float(np.nanpercentile(pelvis_window, 90)) if not pelvis_window.empty else None
     else:
         report.peak_pelvis_drop = None
 
@@ -1634,7 +1620,6 @@ def peak_absmax(col, n=90, percentile=95):
         if not post_ic_df.empty and "lateral_trunk_lean" in post_ic_df.columns
         else None
     )
-
     report.max_anterior_trunk_lean = (
         post_ic_df["anterior_trunk_lean"].dropna().max()
         if not post_ic_df.empty and "anterior_trunk_lean" in post_ic_df.columns
@@ -1670,7 +1655,6 @@ def peak_absmax(col, n=90, percentile=95):
     recs = []
     flags.extend(measurement_quality_flags)
 
-    # IC knee flexion scoring - side view only
     if score_sagittal:
         for side, val, col in [
             ("Left", report.left_knee_flexion_at_IC, "left_knee_flexion"),
@@ -1678,79 +1662,81 @@ def peak_absmax(col, n=90, percentile=95):
         ]:
             if suppress_ic_knee_scoring:
                 continue
+            if val is None:
+                continue
 
-            if val is not None:
-                flexion = 180 - val
-                loading = phase_slice(df, report.phase_windows, "loading_0_200ms")
-                persistent = consecutive_abnormal(
-                    180 - safe_series(loading, col),
-                    T["min_safe_knee_flexion_IC"],
-                    "below",
-                    2,
-                )
+            flexion = 180 - val
+            loading = phase_slice(df, report.phase_windows, "loading_0_200ms")
+            persistent = consecutive_abnormal(
+                180 - safe_series(loading, col),
+                T["min_safe_knee_flexion_IC"],
+                "below",
+                2,
+            )
 
-                if flexion < T["min_safe_knee_flexion_IC"] and persistent and confidence_ok:
-                    sev = (T["min_safe_knee_flexion_IC"] - flexion) / T["min_safe_knee_flexion_IC"]
-                    acl_score += 15 * min(sev, 1.0)
-                    gen_score += 10 * min(sev, 1.0)
-                    flags.append(f"⚠️ {side} knee stiff landing - {flexion:.1f}° flexion at contact")
-                    recs.append(f"Practice soft landings with >{T['min_safe_knee_flexion_IC']}° knee flexion at contact ({side.lower()} side).")
-                elif flexion < T["min_safe_knee_flexion_IC"]:
-                    flags.append(f"ℹ️ {side} stiff landing signal suppressed due to confidence/persistence gating.")
+            if flexion < T["min_safe_knee_flexion_IC"] and persistent and confidence_ok:
+                sev = (T["min_safe_knee_flexion_IC"] - flexion) / T["min_safe_knee_flexion_IC"]
+                acl_score += 15 * min(sev, 1.0)
+                gen_score += 10 * min(sev, 1.0)
+                flags.append(f"⚠️ {side} knee stiff landing - {flexion:.1f}° flexion at contact")
+                recs.append(f"Practice soft landings with >{T['min_safe_knee_flexion_IC']}° knee flexion at contact ({side.lower()} side).")
+            elif flexion < T["min_safe_knee_flexion_IC"]:
+                flags.append(f"ℹ️ {side} stiff landing signal suppressed due to confidence/persistence gating.")
 
-    # Peak flexion scoring - side view only
-    if score_sagittal:
         for side, val in [
             ("Left", report.left_knee_flexion_peak),
             ("Right", report.right_knee_flexion_peak),
         ]:
-            if val is not None:
-                peak_flex = 180 - val
-                if peak_flex < T["min_safe_knee_flexion_peak"] and confidence_ok:
-                    sev = (T["min_safe_knee_flexion_peak"] - peak_flex) / T["min_safe_knee_flexion_peak"]
-                    acl_score += 7.5 * min(sev, 1.0)
-                    gen_score += 5.0 * min(sev, 1.0)
-                    flags.append(f"⚠️ {side} knee insufficient peak flexion - {peak_flex:.1f}°")
-                    recs.append(f"Improve {side.lower()} knee flexion depth at landing.")
+            if val is None:
+                continue
 
-    # Valgus scoring - frontal view only
+            peak_flex = 180 - val
+            if peak_flex < T["min_safe_knee_flexion_peak"] and confidence_ok:
+                sev = (T["min_safe_knee_flexion_peak"] - peak_flex) / T["min_safe_knee_flexion_peak"]
+                acl_score += 7.5 * min(sev, 1.0)
+                gen_score += 5.0 * min(sev, 1.0)
+                flags.append(f"⚠️ {side} knee insufficient peak flexion - {peak_flex:.1f}°")
+                recs.append(f"Improve {side.lower()} knee flexion depth at landing.")
+
     if score_frontal:
         for side, val, col in [
             ("Left", report.peak_left_valgus, "left_knee_valgus_2d"),
             ("Right", report.peak_right_valgus, "right_knee_valgus_2d"),
         ]:
-            if val is not None:
-                peak_start = ic if ic is not None else 0
-                valgus_series = safe_series(df.iloc[peak_start:peak_start + 90], col)
-                persistent = consecutive_abnormal(
-                    valgus_series,
-                    T["max_safe_valgus_deg"],
-                    "above",
-                    4,
-                )
+            if val is None:
+                continue
 
-                if val > T["max_safe_valgus_deg"] and persistent and confidence_ok:
-                    sev = (val - T["max_safe_valgus_deg"]) / 20.0
-                    acl_score += 15 * min(sev, 1.0)
-                    gen_score += 12 * min(sev, 1.0)
-                    flags.append(f"🚨 {side} 2D valgus - {val:.1f}° inward collapse")
-                    recs.append(f"PRIORITY: {side} valgus control. Strengthen hip abductors. Consider PEP or FIFA 11+.")
-                elif val > T["max_safe_valgus_deg"]:
-                    flags.append(f"ℹ️ {side} valgus signal suppressed due to confidence/persistence gating.")
+            peak_start = ic if ic is not None else 0
+            valgus_series = safe_series(df.iloc[peak_start:peak_start + 90], col)
+            persistent = consecutive_abnormal(
+                valgus_series,
+                T["max_safe_valgus_deg"],
+                "above",
+                4,
+            )
 
-    if score_frontal and report.peak_pelvis_drop is not None and report.peak_pelvis_drop > T["max_safe_pelvis_drop_deg"] and confidence_ok:
-        sev = (report.peak_pelvis_drop - T["max_safe_pelvis_drop_deg"]) / 15.0
-        acl_score += 8 * min(sev, 1.0)
-        gen_score += 8 * min(sev, 1.0)
-        flags.append(f"⚠️ Pelvis drop - {report.peak_pelvis_drop:.1f}°")
-        recs.append("Pelvis drop indicates hip abductor weakness. Glute medius strengthening required.")
+            if val > T["max_safe_valgus_deg"] and persistent and confidence_ok:
+                sev = (val - T["max_safe_valgus_deg"]) / 20.0
+                acl_score += 15 * min(sev, 1.0)
+                gen_score += 12 * min(sev, 1.0)
+                flags.append(f"🚨 {side} 2D valgus - {val:.1f}° inward collapse")
+                recs.append(f"PRIORITY: {side} valgus control. Strengthen hip abductors. Consider PEP or FIFA 11+.")
+            elif val > T["max_safe_valgus_deg"]:
+                flags.append(f"ℹ️ {side} valgus signal suppressed due to confidence/persistence gating.")
 
-    if score_frontal and report.max_lateral_trunk_lean is not None and report.max_lateral_trunk_lean > T["max_safe_trunk_lateral_deg"] and confidence_ok:
-        sev = (report.max_lateral_trunk_lean - T["max_safe_trunk_lateral_deg"]) / 20.0
-        acl_score += 10 * min(sev, 1.0)
-        gen_score += 8 * min(sev, 1.0)
-        flags.append(f"⚠️ Lateral trunk lean - {report.max_lateral_trunk_lean:.1f}°")
-        recs.append("Improve lateral core stability.")
+        if report.peak_pelvis_drop is not None and report.peak_pelvis_drop > T["max_safe_pelvis_drop_deg"] and confidence_ok:
+            sev = (report.peak_pelvis_drop - T["max_safe_pelvis_drop_deg"]) / 15.0
+            acl_score += 8 * min(sev, 1.0)
+            gen_score += 8 * min(sev, 1.0)
+            flags.append(f"⚠️ Pelvis drop - {report.peak_pelvis_drop:.1f}°")
+            recs.append("Pelvis drop indicates hip abductor weakness. Glute medius strengthening required.")
+
+        if report.max_lateral_trunk_lean is not None and report.max_lateral_trunk_lean > T["max_safe_trunk_lateral_deg"] and confidence_ok:
+            sev = (report.max_lateral_trunk_lean - T["max_safe_trunk_lateral_deg"]) / 20.0
+            acl_score += 10 * min(sev, 1.0)
+            gen_score += 8 * min(sev, 1.0)
+            flags.append(f"⚠️ Lateral trunk lean - {report.max_lateral_trunk_lean:.1f}°")
+            recs.append("Improve lateral core stability.")
 
     if score_sagittal and report.knee_flexion_asymmetry_pct is not None and report.knee_flexion_asymmetry_pct > T["max_safe_asymmetry_pct"] and confidence_ok:
         sev = (report.knee_flexion_asymmetry_pct - T["max_safe_asymmetry_pct"]) / 30.0
@@ -1758,7 +1744,6 @@ def peak_absmax(col, n=90, percentile=95):
         flags.append(f"⚠️ Bilateral asymmetry - {report.knee_flexion_asymmetry_pct:.1f}%")
         recs.append("Address asymmetry with unilateral training.")
 
-    # Combined pattern escalation disabled until frontal + side reports are merged.
     report.acl_risk_score = min(round(acl_score, 1), 100.0)
     report.general_injury_risk_score = min(round(gen_score, 1), 100.0)
     report.hybrid_score_details = {"used": False, "reason": "no labeled dataset model supplied"}
