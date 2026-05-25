@@ -1666,23 +1666,32 @@ report.normalization_summary = {
         "units": "body-relative normalized image units",
     }
 
-confidence_ok = report.mean_visibility >= 0.65 and report.pose_detection_rate >= 0.70
-acl_score = 0.0
-gen_score = 0.0
-flags = []
-recs = []
-flags.extend(measurement_quality_flags)
+    confidence_ok = report.mean_visibility >= 0.65 and report.pose_detection_rate >= 0.70
+    acl_score = 0.0
+    gen_score = 0.0
+    flags = []
+    recs = []
+    flags.extend(measurement_quality_flags)
 
     # IC knee flexion scoring - side view only
-if score_sagittal:
-            for side, val, col in [("Left", report.left_knee_flexion_at_IC, "left_knee_flexion"),
-                                        ("Right", report.right_knee_flexion_at_IC, "right_knee_flexion")]:
-                if suppress_ic_knee_scoring:
-                    continue
+    if score_sagittal:
+        for side, val, col in [
+            ("Left", report.left_knee_flexion_at_IC, "left_knee_flexion"),
+            ("Right", report.right_knee_flexion_at_IC, "right_knee_flexion"),
+        ]:
+            if suppress_ic_knee_scoring:
+                continue
+
             if val is not None:
                 flexion = 180 - val
                 loading = phase_slice(df, report.phase_windows, "loading_0_200ms")
-                persistent = consecutive_abnormal(180 - safe_series(loading, col), T["min_safe_knee_flexion_IC"], "below", 2)
+                persistent = consecutive_abnormal(
+                    180 - safe_series(loading, col),
+                    T["min_safe_knee_flexion_IC"],
+                    "below",
+                    2,
+                )
+
                 if flexion < T["min_safe_knee_flexion_IC"] and persistent and confidence_ok:
                     sev = (T["min_safe_knee_flexion_IC"] - flexion) / T["min_safe_knee_flexion_IC"]
                     acl_score += 15 * min(sev, 1.0)
@@ -1692,11 +1701,14 @@ if score_sagittal:
                 elif flexion < T["min_safe_knee_flexion_IC"]:
                     flags.append(f"ℹ️ {side} stiff landing signal suppressed due to confidence/persistence gating.")
 
-        # Peak flexion scoring - side view only
-if score_sagittal:
-            for side, val in [("Left", report.left_knee_flexion_peak), ("Right", report.right_knee_flexion_peak)]:
-                if val is not None:
-                    peak_flex = 180 - val
+    # Peak flexion scoring - side view only
+    if score_sagittal:
+        for side, val in [
+            ("Left", report.left_knee_flexion_peak),
+            ("Right", report.right_knee_flexion_peak),
+        ]:
+            if val is not None:
+                peak_flex = 180 - val
                 if peak_flex < T["min_safe_knee_flexion_peak"] and confidence_ok:
                     sev = (T["min_safe_knee_flexion_peak"] - peak_flex) / T["min_safe_knee_flexion_peak"]
                     acl_score += 7.5 * min(sev, 1.0)
@@ -1704,93 +1716,60 @@ if score_sagittal:
                     flags.append(f"⚠️ {side} knee insufficient peak flexion - {peak_flex:.1f}°")
                     recs.append(f"Improve {side.lower()} knee flexion depth at landing.")
 
-        # Valgus scoring - frontal view only
-if score_frontal:
-            for side, val, col in [("Left", report.peak_left_valgus, "left_knee_valgus_2d"),
-                                    ("Right", report.peak_right_valgus, "right_knee_valgus_2d")]:
-                        if val is not None:
-                            peak_start = ic if ic is not None else 0
-            valgus_series = safe_series(df.iloc[peak_start:peak_start + 90], col)
-            persistent = consecutive_abnormal(valgus_series, T["max_safe_valgus_deg"], "above", 4)
-            if val > T["max_safe_valgus_deg"] and persistent and confidence_ok:
-                sev = (val - T["max_safe_valgus_deg"]) / 20.0
-                acl_score += 15 * min(sev, 1.0)
-                gen_score += 12 * min(sev, 1.0)
-                flags.append(f"🚨 {side} 2D valgus - {val:.1f}° inward collapse")
-                recs.append(f"PRIORITY: {side} valgus control. Strengthen hip abductors. Consider PEP or FIFA 11+.")
-            elif val > T["max_safe_valgus_deg"]:
-                flags.append(f"ℹ️ {side} valgus signal suppressed due to confidence/persistence gating.")
+    # Valgus scoring - frontal view only
+    if score_frontal:
+        for side, val, col in [
+            ("Left", report.peak_left_valgus, "left_knee_valgus_2d"),
+            ("Right", report.peak_right_valgus, "right_knee_valgus_2d"),
+        ]:
+            if val is not None:
+                peak_start = ic if ic is not None else 0
+                valgus_series = safe_series(df.iloc[peak_start:peak_start + 90], col)
+                persistent = consecutive_abnormal(
+                    valgus_series,
+                    T["max_safe_valgus_deg"],
+                    "above",
+                    4,
+                )
 
-if score_frontal and report.peak_pelvis_drop is not None and report.peak_pelvis_drop > T["max_safe_pelvis_drop_deg"] and confidence_ok:
+                if val > T["max_safe_valgus_deg"] and persistent and confidence_ok:
+                    sev = (val - T["max_safe_valgus_deg"]) / 20.0
+                    acl_score += 15 * min(sev, 1.0)
+                    gen_score += 12 * min(sev, 1.0)
+                    flags.append(f"🚨 {side} 2D valgus - {val:.1f}° inward collapse")
+                    recs.append(f"PRIORITY: {side} valgus control. Strengthen hip abductors. Consider PEP or FIFA 11+.")
+                elif val > T["max_safe_valgus_deg"]:
+                    flags.append(f"ℹ️ {side} valgus signal suppressed due to confidence/persistence gating.")
+
+    if score_frontal and report.peak_pelvis_drop is not None and report.peak_pelvis_drop > T["max_safe_pelvis_drop_deg"] and confidence_ok:
         sev = (report.peak_pelvis_drop - T["max_safe_pelvis_drop_deg"]) / 15.0
         acl_score += 8 * min(sev, 1.0)
         gen_score += 8 * min(sev, 1.0)
         flags.append(f"⚠️ Pelvis drop - {report.peak_pelvis_drop:.1f}°")
         recs.append("Pelvis drop indicates hip abductor weakness. Glute medius strengthening required.")
 
-if score_frontal and report.max_lateral_trunk_lean is not None and report.max_lateral_trunk_lean > T["max_safe_trunk_lateral_deg"] and confidence_ok:
+    if score_frontal and report.max_lateral_trunk_lean is not None and report.max_lateral_trunk_lean > T["max_safe_trunk_lateral_deg"] and confidence_ok:
         sev = (report.max_lateral_trunk_lean - T["max_safe_trunk_lateral_deg"]) / 20.0
         acl_score += 10 * min(sev, 1.0)
         gen_score += 8 * min(sev, 1.0)
         flags.append(f"⚠️ Lateral trunk lean - {report.max_lateral_trunk_lean:.1f}°")
         recs.append("Improve lateral core stability.")
 
-if score_sagittal and report.knee_flexion_asymmetry_pct is not None and report.knee_flexion_asymmetry_pct > T["max_safe_asymmetry_pct"] and confidence_ok:
+    if score_sagittal and report.knee_flexion_asymmetry_pct is not None and report.knee_flexion_asymmetry_pct > T["max_safe_asymmetry_pct"] and confidence_ok:
         sev = (report.knee_flexion_asymmetry_pct - T["max_safe_asymmetry_pct"]) / 30.0
         gen_score += 10 * min(sev, 1.0)
         flags.append(f"⚠️ Bilateral asymmetry - {report.knee_flexion_asymmetry_pct:.1f}%")
         recs.append("Address asymmetry with unilateral training.")
 
-    # Pattern escalation: stiff bilateral landing + unilateral valgus is clinically higher risk
-ic_flex_vals = [
-        180 - v for v in [
-            report.left_knee_flexion_at_IC,
-            report.right_knee_flexion_at_IC,
-        ]
-        if v is not None
-    ]
+    # Combined pattern escalation disabled until frontal + side reports are merged.
+    report.acl_risk_score = min(round(acl_score, 1), 100.0)
+    report.general_injury_risk_score = min(round(gen_score, 1), 100.0)
+    report.hybrid_score_details = {"used": False, "reason": "no labeled dataset model supplied"}
+    report = apply_hybrid_score(report, hybrid_model)
+    report.acl_risk_level = score_level(report.acl_risk_score)
+    report.general_risk_level = score_level(report.general_injury_risk_score)
 
-valgus_vals = [
-        v for v in [
-            report.peak_left_valgus,
-            report.peak_right_valgus,
-        ]
-        if v is not None
-    ]
-
-if False and confidence_ok and not suppress_ic_knee_scoring and ic_flex_vals and valgus_vals:
-        min_ic_flex = min(ic_flex_vals)
-        max_ic_flex = max(ic_flex_vals)
-        max_valgus = max(valgus_vals)
-
-        high_valgus_cutoff = T["max_safe_valgus_deg"] * 2.0
-        moderate_valgus_cutoff = T["max_safe_valgus_deg"] * 1.5
-
-        if max_ic_flex < 20 and max_valgus >= high_valgus_cutoff:
-            acl_score = max(acl_score, 55.0)
-            gen_score = max(gen_score, 40.0)
-            flags.append(
-                "🚨 Combined high-risk landing pattern - bilateral stiff initial contact with excessive unilateral valgus"
-            )
-            recs.append(
-                "Prioritize landing retraining: increase knee flexion at contact while controlling frontal-plane knee collapse."
-            )
-
-        elif min_ic_flex < 15 and max_valgus >= moderate_valgus_cutoff:
-            acl_score = max(acl_score, 45.0)
-            gen_score = max(gen_score, 32.0)
-            flags.append(
-                "⚠️ Combined landing concern - stiff initial contact with excessive unilateral valgus"
-            )
-
-report.acl_risk_score = min(round(acl_score, 1), 100.0)
-report.general_injury_risk_score = min(round(gen_score, 1), 100.0)
-report.hybrid_score_details = {"used": False, "reason": "no labeled dataset model supplied"}
-report = apply_hybrid_score(report, hybrid_model)
-report.acl_risk_level = score_level(report.acl_risk_score)
-report.general_risk_level = score_level(report.general_injury_risk_score)
-
-if not any(f.startswith(("⚠️", "🚨")) for f in flags):
+    if not any(f.startswith(("⚠️", "🚨")) for f in flags):
         flags.insert(0, "✅ No significant high-confidence biomechanical risk flags detected.")
         recs.append("Maintain current landing mechanics.")
 
