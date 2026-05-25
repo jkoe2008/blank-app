@@ -1640,7 +1640,7 @@ post_ic_df["anterior_trunk_lean"].dropna().max()
         else None
     )
 
-    if report.left_knee_flexion_at_IC is not None and report.right_knee_flexion_at_IC is not None:
+if report.left_knee_flexion_at_IC is not None and report.right_knee_flexion_at_IC is not None:
         left_flex = 180 - report.left_knee_flexion_at_IC
         right_flex = 180 - report.right_knee_flexion_at_IC
         denom = (left_flex + right_flex) / 2
@@ -1653,31 +1653,31 @@ post_ic_df["anterior_trunk_lean"].dropna().max()
         if denom > 0:
             report.knee_flexion_asymmetry_pct = abs(left_flex - right_flex) / denom * 100
 
-    if ic is not None:
+if ic is not None:
         window = df["left_knee_flexion"].iloc[max(0, ic - 3):ic + 8].dropna()
         if len(window) >= 2:
             report.landing_stiffness_index = abs((window.iloc[-1] - window.iloc[0]) / ((len(window) - 1) / fps))
 
-    report.temporal_features = compute_temporal_features(df, ic, fps)
-    report.normalization_summary = {
+report.temporal_features = compute_temporal_features(df, ic, fps)
+report.normalization_summary = {
         "mean_body_scale": round(float(df["body_scale"].dropna().mean()), 4) if "body_scale" in df and not df["body_scale"].dropna().empty else None,
         "mean_shoulder_width": round(float(df["shoulder_width"].dropna().mean()), 4) if "shoulder_width" in df and not df["shoulder_width"].dropna().empty else None,
         "mean_pelvis_width": round(float(df["pelvis_width"].dropna().mean()), 4) if "pelvis_width" in df and not df["pelvis_width"].dropna().empty else None,
         "units": "body-relative normalized image units",
     }
 
-    confidence_ok = report.mean_visibility >= 0.65 and report.pose_detection_rate >= 0.70
-    acl_score = 0.0
-    gen_score = 0.0
-    flags = []
-    recs = []
-    flags.extend(measurement_quality_flags)
+confidence_ok = report.mean_visibility >= 0.65 and report.pose_detection_rate >= 0.70
+acl_score = 0.0
+gen_score = 0.0
+flags = []
+recs = []
+flags.extend(measurement_quality_flags)
 
     # IC knee flexion scoring - side view only
-        if score_sagittal:
+if score_sagittal:
             for side, val, col in [("Left", report.left_knee_flexion_at_IC, "left_knee_flexion"),
                                         ("Right", report.right_knee_flexion_at_IC, "right_knee_flexion")]:
-            if suppress_ic_knee_scoring:
+if suppress_ic_knee_scoring:
                     continue
             if val is not None:
                 flexion = 180 - val
