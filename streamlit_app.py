@@ -1634,8 +1634,8 @@ post_ic_df["lateral_trunk_lean"].abs().dropna().max()
         if not post_ic_df.empty and "lateral_trunk_lean" in post_ic_df.columns
         else None
     )
-    report.max_anterior_trunk_lean = (
-        post_ic_df["anterior_trunk_lean"].dropna().max()
+report.max_anterior_trunk_lean = (
+post_ic_df["anterior_trunk_lean"].dropna().max()
         if not post_ic_df.empty and "anterior_trunk_lean" in post_ic_df.columns
         else None
     )
