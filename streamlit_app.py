@@ -1618,8 +1618,6 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         else None
     )
 
-    report = apply_view_metric_policy(report, cam_angle)
-
     if report.left_knee_flexion_at_IC is not None and report.right_knee_flexion_at_IC is not None:
         left_flex = 180 - report.left_knee_flexion_at_IC
         right_flex = 180 - report.right_knee_flexion_at_IC
@@ -1775,6 +1773,9 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     report.recommendations = recs
     report.movement_profile = classify_movement_profile(report)
     report.progressions = build_progressions(report)
+
+    report = apply_view_metric_policy(report, cam_angle)
+
     report = add_uncertainty(report)
     report.failure_flags = detect_failures(report, df, fps)
     report.baseline_percentiles = compute_baseline_percentiles(report, baseline_df)
