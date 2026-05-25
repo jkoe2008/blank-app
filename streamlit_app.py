@@ -1623,7 +1623,7 @@ if "pelvis_drop" in df.columns:
             if not pelvis_window.empty
             else None
         )
-    else:
+else:
         report.peak_pelvis_drop = None
 
     # Trunk lean: windowed to post-IC only
