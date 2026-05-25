@@ -881,6 +881,48 @@ THRESHOLDS = {
 }
 
 VISIBILITY_THRESHOLD = 0.6
+VIEW_METRIC_POLICY = {
+    "frontal": {
+        "reportable": [
+            "peak_left_valgus",
+            "peak_right_valgus",
+            "peak_pelvis_drop",
+            "max_lateral_trunk_lean",
+        ],
+        "not_reportable": [
+            "left_knee_flexion_at_IC",
+            "right_knee_flexion_at_IC",
+            "left_knee_flexion_peak",
+            "right_knee_flexion_peak",
+            "left_hip_flexion_at_IC",
+            "right_hip_flexion_at_IC",
+            "max_anterior_trunk_lean",
+            "landing_stiffness_index",
+            "knee_flexion_asymmetry_pct",
+        ],
+    },
+    "side": {
+        "reportable": [
+            "left_knee_flexion_at_IC",
+            "right_knee_flexion_at_IC",
+            "left_knee_flexion_peak",
+            "right_knee_flexion_peak",
+            "left_hip_flexion_at_IC",
+            "right_hip_flexion_at_IC",
+            "max_anterior_trunk_lean",
+            "landing_stiffness_index",
+            "knee_flexion_asymmetry_pct",
+        ],
+        "not_reportable": [
+            "peak_left_valgus",
+            "peak_right_valgus",
+            "peak_pelvis_drop",
+            "max_lateral_trunk_lean",
+        ],
+    },
+}
+
+VISIBILITY_THRESHOLD = 0.6
 REQUIRED_LANDMARKS = [
     LM.LEFT_HIP, LM.LEFT_KNEE, LM.LEFT_ANKLE,
     LM.RIGHT_HIP, LM.RIGHT_KNEE, LM.RIGHT_ANKLE,
@@ -955,6 +997,7 @@ class RiskReport:
     general_risk_level: str = "Unknown"
     movement_profile: str = "Unclassified"
     metric_uncertainty: dict = field(default_factory=dict)
+    measurement_validity: dict = field(default_factory=dict)
     recommendations: list = field(default_factory=list)
     progressions: list = field(default_factory=list)
 
@@ -1259,7 +1302,25 @@ def score_level(score):
         return "HIGH"
     return "VERY HIGH"
 
+def apply_view_metric_policy(report, view):
+    view = (view or "frontal").lower()
+    policy = VIEW_METRIC_POLICY.get(view, {})
+
+    report.measurement_validity = {
+        "view": view,
+        "reportable": policy.get("reportable", []),
+        "not_reportable": policy.get("not_reportable", []),
+    }
+
+    for metric in policy.get("not_reportable", []):
+        if hasattr(report, metric):
+            setattr(report, metric, None)
+
+    return report
+
+
 def add_uncertainty(report):
+
     base = max(0, min(1, report.mean_visibility)) * max(0, min(1, report.pose_detection_rate))
     frontal_conf = base * report.camera_confidence
     sagittal_conf = base * 0.75
@@ -1557,7 +1618,15 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         else None
     )
 
+       report = apply_view_metric_policy(report, cam_angle)
+
     if report.left_knee_flexion_at_IC is not None and report.right_knee_flexion_at_IC is not None:
+        left_flex = 180 - report.left_knee_flexion_at_IC
+        right_flex = 180 - report.right_knee_flexion_at_IC
+        denom = (left_flex + right_flex) / 2
+        if denom > 0:
+            report.knee_flexion_asymmetry_pct = abs(left_flex - right_flex) / denom * 100
+        
         left_flex = 180 - report.left_knee_flexion_at_IC
         right_flex = 180 - report.right_knee_flexion_at_IC
         denom = (left_flex + right_flex) / 2
