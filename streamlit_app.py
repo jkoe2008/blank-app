@@ -1558,10 +1558,12 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         w = df[col].iloc[start:start + n]
         return w.dropna().max() if not w.dropna().empty else None
 
-    def peak_absmax(col, n=90):
+    def peak_absmax(col, n=90, percentile=95):
         start = ic if ic is not None else 0
         w = df[col].iloc[start:start + n].dropna()
-        return w.abs().max() if not w.empty else None
+        if w.empty:
+            return None
+        return float(np.nanpercentile(w.abs(), percentile))
 
     measurement_quality_flags = []
     suppress_ic_knee_scoring = False
@@ -1602,7 +1604,13 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     report.right_hip_flexion_at_IC = at_ic("right_hip_flexion")
     report.peak_left_valgus = peak_max("left_knee_valgus_2d")
     report.peak_right_valgus = peak_max("right_knee_valgus_2d")
-    report.peak_pelvis_drop = peak_absmax("pelvis_drop")
+     
+ if "pelvis_drop" in df.columns:
+        pelvis_series = safe_series(df, "pelvis_drop")
+        df["pelvis_drop_smooth"] = fill_smooth(pelvis_series.to_numpy(dtype=float))
+        report.peak_pelvis_drop = peak_absmax("pelvis_drop_smooth", percentile=90)
+    else:
+    report.peak_pelvis_drop = None
 
     # Trunk lean: windowed to post-IC only
     post_ic_start = ic if ic is not None else 0
