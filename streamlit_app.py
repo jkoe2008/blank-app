@@ -1604,13 +1604,23 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     report.right_hip_flexion_at_IC = at_ic("right_hip_flexion")
     report.peak_left_valgus = peak_max("left_knee_valgus_2d")
     report.peak_right_valgus = peak_max("right_knee_valgus_2d")
-     
+
     if "pelvis_drop" in df.columns:
+        pelvis_start = ic if ic is not None else 0
         pelvis_series = safe_series(df, "pelvis_drop")
         df["pelvis_drop_smooth"] = fill_smooth(pelvis_series.to_numpy(dtype=float))
-        report.peak_pelvis_drop = peak_absmax("pelvis_drop_smooth", percentile=90)
-    else:
 
+        pelvis_window = pd.to_numeric(
+            df["pelvis_drop_smooth"].iloc[pelvis_start:pelvis_start + 90],
+            errors="coerce"
+        ).dropna().abs()
+
+        report.peak_pelvis_drop = (
+            float(np.nanpercentile(pelvis_window, 90))
+            if not pelvis_window.empty
+            else None
+        )
+    else:
         report.peak_pelvis_drop = None
 
     # Trunk lean: windowed to post-IC only
