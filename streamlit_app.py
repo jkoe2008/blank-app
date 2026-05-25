@@ -1529,19 +1529,19 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     report = RiskReport(camera_angle=cam_angle, camera_confidence=cam_conf)
     df = pd.DataFrame([asdict(r) for r in records])
 T = THRESHOLDS
-    view = (cam_angle or "frontal").lower()
-    score_frontal = view == "frontal"
-    score_sagittal = view == "side"
+view = (cam_angle or "frontal").lower()
+score_frontal = view == "frontal"
+score_sagittal = view == "side"
 
-    report.pose_detection_rate = float(df["pose_detected"].mean()) if not df.empty else 0.0
-    report.mean_visibility = float(df["mean_landmark_visibility"].dropna().mean()) if not df["mean_landmark_visibility"].dropna().empty else 0.0
+report.pose_detection_rate = float(df["pose_detected"].mean()) if not df.empty else 0.0
+report.mean_visibility = float(df["mean_landmark_visibility"].dropna().mean()) if not df["mean_landmark_visibility"].dropna().empty else 0.0
 
-    ic, vote_details = detect_initial_contact_voting(df, fps)
-    report.ic_frame = ic
-    report.ic_time_s = ic / fps if ic is not None else None
-    report.ic_detection_method = vote_details.get("method", "deceleration-event voting v2")
-    report.ic_vote_details = vote_details
-    report.phase_windows = get_phase_windows(ic, fps, len(df))
+ic, vote_details = detect_initial_contact_voting(df, fps)
+report.ic_frame = ic
+report.ic_time_s = ic / fps if ic is not None else None
+report.ic_detection_method = vote_details.get("method", "deceleration-event voting v2")
+report.ic_vote_details = vote_details
+report.phase_windows = get_phase_windows(ic, fps, len(df))
 
     def at_ic(col):
         if ic is None or col not in df.columns:
