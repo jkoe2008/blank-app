@@ -1543,7 +1543,7 @@ report.ic_detection_method = vote_details.get("method", "deceleration-event voti
 report.ic_vote_details = vote_details
 report.phase_windows = get_phase_windows(ic, fps, len(df))
 
-    def at_ic(col):
+def at_ic(col):
         if ic is None or col not in df.columns:
             return None
         w = df[col].iloc[max(0, ic - 2): min(len(df), ic + 3)].dropna()
