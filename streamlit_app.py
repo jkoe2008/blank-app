@@ -1627,10 +1627,10 @@ else:
         report.peak_pelvis_drop = None
 
     # Trunk lean: windowed to post-IC only
-    post_ic_start = ic if ic is not None else 0
-    post_ic_df = df.iloc[post_ic_start:]
-    report.max_lateral_trunk_lean = (
-        post_ic_df["lateral_trunk_lean"].abs().dropna().max()
+post_ic_start = ic if ic is not None else 0
+post_ic_df = df.iloc[post_ic_start:]
+report.max_lateral_trunk_lean = (
+post_ic_df["lateral_trunk_lean"].abs().dropna().max()
         if not post_ic_df.empty and "lateral_trunk_lean" in post_ic_df.columns
         else None
     )
