@@ -1580,7 +1580,7 @@ right_ic_raw = report.right_knee_flexion_at_IC
 left_ic_flex = 180 - left_ic_raw if left_ic_raw is not None else None
 right_ic_flex = 180 - right_ic_raw if right_ic_raw is not None else None
 
-    if left_ic_flex is not None and right_ic_flex is not None:
+if left_ic_flex is not None and right_ic_flex is not None:
         side_diff = abs(left_ic_flex - right_ic_flex)
 
         if left_ic_raw > 170 and side_diff > 15:
