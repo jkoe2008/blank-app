@@ -1695,7 +1695,7 @@ if score_sagittal:
         # Peak flexion scoring - side view only
 if score_sagittal:
             for side, val in [("Left", report.left_knee_flexion_peak), ("Right", report.right_knee_flexion_peak)]:
-            if val is not None:
+    if val is not None:
                 peak_flex = 180 - val
                 if peak_flex < T["min_safe_knee_flexion_peak"] and confidence_ok:
                     sev = (T["min_safe_knee_flexion_peak"] - peak_flex) / T["min_safe_knee_flexion_peak"]
