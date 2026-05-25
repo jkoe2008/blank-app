@@ -1658,8 +1658,8 @@ if ic is not None:
         if len(window) >= 2:
             report.landing_stiffness_index = abs((window.iloc[-1] - window.iloc[0]) / ((len(window) - 1) / fps))
 
-report.temporal_features = compute_temporal_features(df, ic, fps)
-report.normalization_summary = {
+    report.temporal_features = compute_temporal_features(df, ic, fps)
+    report.normalization_summary = {
         "mean_body_scale": round(float(df["body_scale"].dropna().mean()), 4) if "body_scale" in df and not df["body_scale"].dropna().empty else None,
         "mean_shoulder_width": round(float(df["shoulder_width"].dropna().mean()), 4) if "shoulder_width" in df and not df["shoulder_width"].dropna().empty else None,
         "mean_pelvis_width": round(float(df["pelvis_width"].dropna().mean()), 4) if "pelvis_width" in df and not df["pelvis_width"].dropna().empty else None,
