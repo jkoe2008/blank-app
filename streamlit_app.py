@@ -1290,13 +1290,13 @@ def classify_movement_profile(report):
     trunk = report.max_lateral_trunk_lean or 0
     pelvis = report.peak_pelvis_drop or 0
 
-    if mean_ic is not None and mean_ic < 25 and max_valgus > 10:
+    if mean_ic is not None and mean_ic < 25 and max_valgus > THRESHOLDS["max_safe_valgus_deg"] * 1.5:
         return "Landing type A: stiff valgus-dominant"
-    if max_valgus > 10 and pelvis > 8:
+    if max_valgus > THRESHOLDS["max_safe_valgus_deg"] * 1.5 and pelvis > THRESHOLDS["max_safe_pelvis_drop_deg"]:
         return "Landing type B: hip-control / valgus compensation"
     if trunk > 12:
         return "Landing type C: trunk-dominant compensation"
-    if mean_ic is not None and mean_ic >= 30 and max_valgus <= 10 and pelvis <= 8:
+    if mean_ic is not None and mean_ic >= 30 and max_valgus <= THRESHOLDS["max_safe_valgus_deg"] and pelvis <= THRESHOLDS["max_safe_pelvis_drop_deg"]:
         return "Landing type D: balanced landing pattern"
     return "Landing type E: mixed pattern"
 
@@ -1558,9 +1558,11 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     )
 
     if report.left_knee_flexion_at_IC is not None and report.right_knee_flexion_at_IC is not None:
-        denom = (report.left_knee_flexion_at_IC + report.right_knee_flexion_at_IC) / 2
+        left_flex = 180 - report.left_knee_flexion_at_IC
+        right_flex = 180 - report.right_knee_flexion_at_IC
+        denom = (left_flex + right_flex) / 2
         if denom > 0:
-            report.knee_flexion_asymmetry_pct = abs(report.left_knee_flexion_at_IC - report.right_knee_flexion_at_IC) / denom * 100
+            report.knee_flexion_asymmetry_pct = abs(left_flex - right_flex) / denom * 100
 
     if ic is not None:
         window = df["left_knee_flexion"].iloc[max(0, ic - 3):ic + 8].dropna()
@@ -1617,7 +1619,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         if val is not None:
             peak_start = ic if ic is not None else 0
             valgus_series = safe_series(df.iloc[peak_start:peak_start + 90], col)
-            persistent = consecutive_abnormal(valgus_series, T["max_safe_valgus_deg"], "above", 2)
+            persistent = consecutive_abnormal(valgus_series, T["max_safe_valgus_deg"], "above", 4)
             if val > T["max_safe_valgus_deg"] and persistent and confidence_ok:
                 sev = (val - T["max_safe_valgus_deg"]) / 20.0
                 acl_score += 15 * min(sev, 1.0)
@@ -1669,7 +1671,10 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         max_ic_flex = max(ic_flex_vals)
         max_valgus = max(valgus_vals)
 
-        if max_ic_flex < 20 and max_valgus >= 15:
+        high_valgus_cutoff = T["max_safe_valgus_deg"] * 2.0
+        moderate_valgus_cutoff = T["max_safe_valgus_deg"] * 1.5
+
+        if max_ic_flex < 20 and max_valgus >= high_valgus_cutoff:
             acl_score = max(acl_score, 55.0)
             gen_score = max(gen_score, 40.0)
             flags.append(
@@ -1679,7 +1684,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
                 "Prioritize landing retraining: increase knee flexion at contact while controlling frontal-plane knee collapse."
             )
 
-        elif min_ic_flex < 15 and max_valgus >= 15:
+        elif min_ic_flex < 15 and max_valgus >= moderate_valgus_cutoff:
             acl_score = max(acl_score, 45.0)
             gen_score = max(gen_score, 32.0)
             flags.append(
