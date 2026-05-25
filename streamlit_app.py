@@ -1705,11 +1705,11 @@ if score_sagittal:
                     recs.append(f"Improve {side.lower()} knee flexion depth at landing.")
 
         # Valgus scoring - frontal view only
-        if score_frontal:
+if score_frontal:
             for side, val, col in [("Left", report.peak_left_valgus, "left_knee_valgus_2d"),
                                     ("Right", report.peak_right_valgus, "right_knee_valgus_2d")]:
-        if val is not None:
-            peak_start = ic if ic is not None else 0
+                        if val is not None:
+                            peak_start = ic if ic is not None else 0
             valgus_series = safe_series(df.iloc[peak_start:peak_start + 90], col)
             persistent = consecutive_abnormal(valgus_series, T["max_safe_valgus_deg"], "above", 4)
             if val > T["max_safe_valgus_deg"] and persistent and confidence_ok:
@@ -1721,28 +1721,28 @@ if score_sagittal:
             elif val > T["max_safe_valgus_deg"]:
                 flags.append(f"ℹ️ {side} valgus signal suppressed due to confidence/persistence gating.")
 
-    if score_frontal and report.peak_pelvis_drop is not None and report.peak_pelvis_drop > T["max_safe_pelvis_drop_deg"] and confidence_ok:
+if score_frontal and report.peak_pelvis_drop is not None and report.peak_pelvis_drop > T["max_safe_pelvis_drop_deg"] and confidence_ok:
         sev = (report.peak_pelvis_drop - T["max_safe_pelvis_drop_deg"]) / 15.0
         acl_score += 8 * min(sev, 1.0)
         gen_score += 8 * min(sev, 1.0)
         flags.append(f"⚠️ Pelvis drop - {report.peak_pelvis_drop:.1f}°")
         recs.append("Pelvis drop indicates hip abductor weakness. Glute medius strengthening required.")
 
-    if score_frontal and report.max_lateral_trunk_lean is not None and report.max_lateral_trunk_lean > T["max_safe_trunk_lateral_deg"] and confidence_ok:
+if score_frontal and report.max_lateral_trunk_lean is not None and report.max_lateral_trunk_lean > T["max_safe_trunk_lateral_deg"] and confidence_ok:
         sev = (report.max_lateral_trunk_lean - T["max_safe_trunk_lateral_deg"]) / 20.0
         acl_score += 10 * min(sev, 1.0)
         gen_score += 8 * min(sev, 1.0)
         flags.append(f"⚠️ Lateral trunk lean - {report.max_lateral_trunk_lean:.1f}°")
         recs.append("Improve lateral core stability.")
 
-    if score_sagittal and report.knee_flexion_asymmetry_pct is not None and report.knee_flexion_asymmetry_pct > T["max_safe_asymmetry_pct"] and confidence_ok:
+if score_sagittal and report.knee_flexion_asymmetry_pct is not None and report.knee_flexion_asymmetry_pct > T["max_safe_asymmetry_pct"] and confidence_ok:
         sev = (report.knee_flexion_asymmetry_pct - T["max_safe_asymmetry_pct"]) / 30.0
         gen_score += 10 * min(sev, 1.0)
         flags.append(f"⚠️ Bilateral asymmetry - {report.knee_flexion_asymmetry_pct:.1f}%")
         recs.append("Address asymmetry with unilateral training.")
 
     # Pattern escalation: stiff bilateral landing + unilateral valgus is clinically higher risk
-    ic_flex_vals = [
+ic_flex_vals = [
         180 - v for v in [
             report.left_knee_flexion_at_IC,
             report.right_knee_flexion_at_IC,
@@ -1750,7 +1750,7 @@ if score_sagittal:
         if v is not None
     ]
 
-    valgus_vals = [
+valgus_vals = [
         v for v in [
             report.peak_left_valgus,
             report.peak_right_valgus,
@@ -1758,7 +1758,7 @@ if score_sagittal:
         if v is not None
     ]
 
-    if False and confidence_ok and not suppress_ic_knee_scoring and ic_flex_vals and valgus_vals:
+if False and confidence_ok and not suppress_ic_knee_scoring and ic_flex_vals and valgus_vals:
         min_ic_flex = min(ic_flex_vals)
         max_ic_flex = max(ic_flex_vals)
         max_valgus = max(valgus_vals)
@@ -1783,29 +1783,29 @@ if score_sagittal:
                 "⚠️ Combined landing concern - stiff initial contact with excessive unilateral valgus"
             )
 
-    report.acl_risk_score = min(round(acl_score, 1), 100.0)
-    report.general_injury_risk_score = min(round(gen_score, 1), 100.0)
-    report.hybrid_score_details = {"used": False, "reason": "no labeled dataset model supplied"}
-    report = apply_hybrid_score(report, hybrid_model)
-    report.acl_risk_level = score_level(report.acl_risk_score)
-    report.general_risk_level = score_level(report.general_injury_risk_score)
+report.acl_risk_score = min(round(acl_score, 1), 100.0)
+report.general_injury_risk_score = min(round(gen_score, 1), 100.0)
+report.hybrid_score_details = {"used": False, "reason": "no labeled dataset model supplied"}
+report = apply_hybrid_score(report, hybrid_model)
+report.acl_risk_level = score_level(report.acl_risk_score)
+report.general_risk_level = score_level(report.general_injury_risk_score)
 
-    if not any(f.startswith(("⚠️", "🚨")) for f in flags):
+if not any(f.startswith(("⚠️", "🚨")) for f in flags):
         flags.insert(0, "✅ No significant high-confidence biomechanical risk flags detected.")
         recs.append("Maintain current landing mechanics.")
 
-    report.flags = flags
-    report.recommendations = recs
-    report.movement_profile = classify_movement_profile(report)
-    report.progressions = build_progressions(report)
+report.flags = flags
+report.recommendations = recs
+report.movement_profile = classify_movement_profile(report)
+report.progressions = build_progressions(report)
 
-    report = apply_view_metric_policy(report, cam_angle)
+report = apply_view_metric_policy(report, cam_angle)
 
-    report = add_uncertainty(report)
-    report.failure_flags = detect_failures(report, df, fps)
-    report.baseline_percentiles = compute_baseline_percentiles(report, baseline_df)
+report = add_uncertainty(report)
+report.failure_flags = detect_failures(report, df, fps)
+report.baseline_percentiles = compute_baseline_percentiles(report, baseline_df)
 
-    if report.failure_flags:
+if report.failure_flags:
         report.flags.insert(0, "ℹ️ Analysis quality warning: review failure detection before interpreting risk.")
 
     return report, df
