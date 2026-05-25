@@ -1528,7 +1528,7 @@ def validate_dataset(history_df):
 def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=None, baseline_df=None):
     report = RiskReport(camera_angle=cam_angle, camera_confidence=cam_conf)
     df = pd.DataFrame([asdict(r) for r in records])
-  T = THRESHOLDS
+T = THRESHOLDS
     view = (cam_angle or "frontal").lower()
     score_frontal = view == "frontal"
     score_sagittal = view == "side"
