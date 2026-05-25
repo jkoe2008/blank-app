@@ -1196,8 +1196,8 @@ def detect_failures(report, df, fps):
         failures.append("pose tracking unreliable: low detection rate")
     if report.mean_visibility < 0.65:
         failures.append("low landmark visibility / possible occlusion")
-    if report.camera_angle != "frontal":
-        failures.append("camera angle invalid or suboptimal for valgus estimation")
+    if report.camera_angle not in ["frontal", "side"]:
+        failures.append("camera angle invalid or unsupported")
     if report.ic_frame is None:
         failures.append("initial contact could not be detected reliably")
     if report.ic_vote_details.get("vote_spread_frames", 0) > max(3, int(0.10 * fps)):
@@ -1205,7 +1205,7 @@ def detect_failures(report, df, fps):
     return failures
 
 @st.cache_data(show_spinner=False)
-def analyze_video(video_path):
+def analyze_video(video_path, view="frontal"):
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 1
@@ -1284,7 +1284,7 @@ def analyze_video(video_path):
     cap.release()
     progress_bar.progress(1.0)
     status_text.text("Analysis complete!")
-    return records, fps, "frontal", 1.0
+    return records, fps, view, 1.0
 
 def confidence_label(score):
     if score >= 0.75:
@@ -1528,7 +1528,10 @@ def validate_dataset(history_df):
 def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=None, baseline_df=None):
     report = RiskReport(camera_angle=cam_angle, camera_confidence=cam_conf)
     df = pd.DataFrame([asdict(r) for r in records])
-    T = THRESHOLDS
+  T = THRESHOLDS
+    view = (cam_angle or "frontal").lower()
+    score_frontal = view == "frontal"
+    score_sagittal = view == "side"
 
     report.pose_detection_rate = float(df["pose_detected"].mean()) if not df.empty else 0.0
     report.mean_visibility = float(df["mean_landmark_visibility"].dropna().mean()) if not df["mean_landmark_visibility"].dropna().empty else 0.0
@@ -1670,38 +1673,41 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     recs = []
     flags.extend(measurement_quality_flags)
 
-    # IC knee flexion scoring
-    for side, val, col in [("Left", report.left_knee_flexion_at_IC, "left_knee_flexion"),
-                            ("Right", report.right_knee_flexion_at_IC, "right_knee_flexion")]:
-        if suppress_ic_knee_scoring:
-            continue
-        if val is not None:
-            flexion = 180 - val
-            loading = phase_slice(df, report.phase_windows, "loading_0_200ms")
-            persistent = consecutive_abnormal(180 - safe_series(loading, col), T["min_safe_knee_flexion_IC"], "below", 2)
-            if flexion < T["min_safe_knee_flexion_IC"] and persistent and confidence_ok:
-                sev = (T["min_safe_knee_flexion_IC"] - flexion) / T["min_safe_knee_flexion_IC"]
-                acl_score += 15 * min(sev, 1.0)
-                gen_score += 10 * min(sev, 1.0)
-                flags.append(f"⚠️ {side} knee stiff landing - {flexion:.1f}° flexion at contact")
-                recs.append(f"Practice soft landings with >{T['min_safe_knee_flexion_IC']}° knee flexion at contact ({side.lower()} side).")
-            elif flexion < T["min_safe_knee_flexion_IC"]:
-                flags.append(f"ℹ️ {side} stiff landing signal suppressed due to confidence/persistence gating.")
+    # IC knee flexion scoring - side view only
+        if score_sagittal:
+            for side, val, col in [("Left", report.left_knee_flexion_at_IC, "left_knee_flexion"),
+                                        ("Right", report.right_knee_flexion_at_IC, "right_knee_flexion")]:
+            if suppress_ic_knee_scoring:
+                    continue
+            if val is not None:
+                flexion = 180 - val
+                loading = phase_slice(df, report.phase_windows, "loading_0_200ms")
+                persistent = consecutive_abnormal(180 - safe_series(loading, col), T["min_safe_knee_flexion_IC"], "below", 2)
+                if flexion < T["min_safe_knee_flexion_IC"] and persistent and confidence_ok:
+                    sev = (T["min_safe_knee_flexion_IC"] - flexion) / T["min_safe_knee_flexion_IC"]
+                    acl_score += 15 * min(sev, 1.0)
+                    gen_score += 10 * min(sev, 1.0)
+                    flags.append(f"⚠️ {side} knee stiff landing - {flexion:.1f}° flexion at contact")
+                    recs.append(f"Practice soft landings with >{T['min_safe_knee_flexion_IC']}° knee flexion at contact ({side.lower()} side).")
+                elif flexion < T["min_safe_knee_flexion_IC"]:
+                    flags.append(f"ℹ️ {side} stiff landing signal suppressed due to confidence/persistence gating.")
 
-    # Peak flexion scoring (threshold lowered to 50° for single-camera MediaPipe)
-    for side, val in [("Left", report.left_knee_flexion_peak), ("Right", report.right_knee_flexion_peak)]:
-        if val is not None:
-            peak_flex = 180 - val
-            if peak_flex < T["min_safe_knee_flexion_peak"] and confidence_ok:
-                sev = (T["min_safe_knee_flexion_peak"] - peak_flex) / T["min_safe_knee_flexion_peak"]
-                acl_score += 7.5 * min(sev, 1.0)
-                gen_score += 5.0 * min(sev, 1.0)
-                flags.append(f"⚠️ {side} knee insufficient peak flexion - {peak_flex:.1f}°")
-                recs.append(f"Improve {side.lower()} knee flexion depth at landing.")
+        # Peak flexion scoring - side view only
+        if score_sagittal:
+            for side, val in [("Left", report.left_knee_flexion_peak), ("Right", report.right_knee_flexion_peak)]:
+            if val is not None:
+                peak_flex = 180 - val
+                if peak_flex < T["min_safe_knee_flexion_peak"] and confidence_ok:
+                    sev = (T["min_safe_knee_flexion_peak"] - peak_flex) / T["min_safe_knee_flexion_peak"]
+                    acl_score += 7.5 * min(sev, 1.0)
+                    gen_score += 5.0 * min(sev, 1.0)
+                    flags.append(f"⚠️ {side} knee insufficient peak flexion - {peak_flex:.1f}°")
+                    recs.append(f"Improve {side.lower()} knee flexion depth at landing.")
 
-    # Valgus scoring — persistence window matches peak detection window (90 frames)
-    for side, val, col in [("Left", report.peak_left_valgus, "left_knee_valgus_2d"),
-                            ("Right", report.peak_right_valgus, "right_knee_valgus_2d")]:
+        # Valgus scoring - frontal view only
+        if score_frontal:
+            for side, val, col in [("Left", report.peak_left_valgus, "left_knee_valgus_2d"),
+                                    ("Right", report.peak_right_valgus, "right_knee_valgus_2d")]:
         if val is not None:
             peak_start = ic if ic is not None else 0
             valgus_series = safe_series(df.iloc[peak_start:peak_start + 90], col)
@@ -1715,21 +1721,21 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
             elif val > T["max_safe_valgus_deg"]:
                 flags.append(f"ℹ️ {side} valgus signal suppressed due to confidence/persistence gating.")
 
-    if report.peak_pelvis_drop is not None and report.peak_pelvis_drop > T["max_safe_pelvis_drop_deg"] and confidence_ok:
+    if score_frontal and report.peak_pelvis_drop is not None and report.peak_pelvis_drop > T["max_safe_pelvis_drop_deg"] and confidence_ok:
         sev = (report.peak_pelvis_drop - T["max_safe_pelvis_drop_deg"]) / 15.0
         acl_score += 8 * min(sev, 1.0)
         gen_score += 8 * min(sev, 1.0)
         flags.append(f"⚠️ Pelvis drop - {report.peak_pelvis_drop:.1f}°")
         recs.append("Pelvis drop indicates hip abductor weakness. Glute medius strengthening required.")
 
-    if report.max_lateral_trunk_lean is not None and report.max_lateral_trunk_lean > T["max_safe_trunk_lateral_deg"] and confidence_ok:
+    if score_frontal and report.max_lateral_trunk_lean is not None and report.max_lateral_trunk_lean > T["max_safe_trunk_lateral_deg"] and confidence_ok:
         sev = (report.max_lateral_trunk_lean - T["max_safe_trunk_lateral_deg"]) / 20.0
         acl_score += 10 * min(sev, 1.0)
         gen_score += 8 * min(sev, 1.0)
         flags.append(f"⚠️ Lateral trunk lean - {report.max_lateral_trunk_lean:.1f}°")
         recs.append("Improve lateral core stability.")
 
-    if report.knee_flexion_asymmetry_pct is not None and report.knee_flexion_asymmetry_pct > T["max_safe_asymmetry_pct"] and confidence_ok:
+    if score_sagittal and report.knee_flexion_asymmetry_pct is not None and report.knee_flexion_asymmetry_pct > T["max_safe_asymmetry_pct"] and confidence_ok:
         sev = (report.knee_flexion_asymmetry_pct - T["max_safe_asymmetry_pct"]) / 30.0
         gen_score += 10 * min(sev, 1.0)
         flags.append(f"⚠️ Bilateral asymmetry - {report.knee_flexion_asymmetry_pct:.1f}%")
@@ -1752,7 +1758,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         if v is not None
     ]
 
-    if confidence_ok and not suppress_ic_knee_scoring and ic_flex_vals and valgus_vals:
+    if False and confidence_ok and not suppress_ic_knee_scoring and ic_flex_vals and valgus_vals:
         min_ic_flex = min(ic_flex_vals)
         max_ic_flex = max(ic_flex_vals)
         max_valgus = max(valgus_vals)
@@ -2564,7 +2570,24 @@ def main():
 
         st.caption("Screening only. Not a diagnosis. Single-camera estimates are sensitive to camera angle, clothing, occlusion, lighting, and calibration.")
 
-    uploaded_file = st.file_uploader("Upload jump landing video", type=["mp4", "mov", "avi", "webm"], help="Recommended: frontal view, 60fps, full body visible")
+    st.subheader("Upload Landing Videos")
+
+    frontal_file = st.file_uploader(
+        "Frontal view video",
+        type=["mp4", "mov", "avi", "webm"],
+        help="Use for valgus, pelvis drop, lateral trunk lean, and frontal-plane control.",
+        key="frontal_video",
+    )
+
+    side_file = st.file_uploader(
+        "Side view video",
+        type=["mp4", "mov", "avi", "webm"],
+        help="Use for knee flexion, hip flexion, anterior trunk lean, and landing depth.",
+        key="side_video",
+    )
+
+    uploaded_file = frontal_file or side_file
+    selected_view = "frontal" if frontal_file is not None else "side"
 
     if uploaded_file is not None:
         upload_bytes = uploaded_file.getvalue()
@@ -2591,7 +2614,7 @@ def main():
                 st.image(first_frame, caption="First frame - does the person look normal?", width=400)
 
             with st.spinner("Analyzing video... This may take 30-60 seconds."):
-                records, fps, cam_angle, cam_conf = analyze_video(video_path)
+                records, fps, cam_angle, cam_conf = analyze_video(video_path, selected_view)
                 report, df = score_risk(records, fps, cam_angle, cam_conf, hybrid_model=hybrid_model, baseline_df=baseline_df)
 
                 clinical_intake = build_clinical_intake(
