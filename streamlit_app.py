@@ -1572,7 +1572,7 @@ measurement_quality_flags = []
 suppress_ic_knee_scoring = False
 
 report.left_knee_flexion_at_IC = at_ic("left_knee_flexion")
-    report.right_knee_flexion_at_IC = at_ic("right_knee_flexion")
+report.right_knee_flexion_at_IC = at_ic("right_knee_flexion")
 
 left_ic_raw = report.left_knee_flexion_at_IC
 right_ic_raw = report.right_knee_flexion_at_IC
