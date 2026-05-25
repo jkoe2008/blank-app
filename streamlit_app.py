@@ -1601,12 +1601,12 @@ if left_ic_flex is not None and right_ic_flex is not None:
                 "ℹ️ Bilateral knee flexion at IC is near-locked (<10° both sides). IC knee-flexion scoring suppressed; repeat capture recommended before interpreting contact stiffness."
             )
 
-    report.left_knee_flexion_peak = peak_min("left_knee_flexion")
-    report.right_knee_flexion_peak = peak_min("right_knee_flexion")
-    report.left_hip_flexion_at_IC = at_ic("left_hip_flexion")
-    report.right_hip_flexion_at_IC = at_ic("right_hip_flexion")
-    report.peak_left_valgus = peak_max("left_knee_valgus_2d")
-    report.peak_right_valgus = peak_max("right_knee_valgus_2d")
+report.left_knee_flexion_peak = peak_min("left_knee_flexion")
+report.right_knee_flexion_peak = peak_min("right_knee_flexion")
+report.left_hip_flexion_at_IC = at_ic("left_hip_flexion")
+report.right_hip_flexion_at_IC = at_ic("right_hip_flexion")
+report.peak_left_valgus = peak_max("left_knee_valgus_2d")
+report.peak_right_valgus = peak_max("right_knee_valgus_2d")
 
     if "pelvis_drop" in df.columns:
         pelvis_start = ic if ic is not None else 0
