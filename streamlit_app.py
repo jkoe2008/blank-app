@@ -1677,7 +1677,7 @@ flags.extend(measurement_quality_flags)
 if score_sagittal:
             for side, val, col in [("Left", report.left_knee_flexion_at_IC, "left_knee_flexion"),
                                         ("Right", report.right_knee_flexion_at_IC, "right_knee_flexion")]:
-    if suppress_ic_knee_scoring:
+            if suppress_ic_knee_scoring:
                     continue
             if val is not None:
                 flexion = 180 - val
