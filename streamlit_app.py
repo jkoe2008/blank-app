@@ -1693,7 +1693,7 @@ if score_sagittal:
                     flags.append(f"ℹ️ {side} stiff landing signal suppressed due to confidence/persistence gating.")
 
         # Peak flexion scoring - side view only
-        if score_sagittal:
+if score_sagittal:
             for side, val in [("Left", report.left_knee_flexion_peak), ("Right", report.right_knee_flexion_peak)]:
             if val is not None:
                 peak_flex = 180 - val
