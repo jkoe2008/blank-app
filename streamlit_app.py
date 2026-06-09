@@ -1497,7 +1497,7 @@ POSE_CFG = dict(
 THRESHOLDS = {
     "min_safe_knee_flexion_IC": 30.0,
     "min_safe_knee_flexion_peak": 50.0,   # lowered from 60 - single-camera MediaPipe underestimates
-    "max_safe_valgus_deg": 5.0,
+    "max_safe_valgus_deg": 7.0,
     "max_safe_asymmetry_pct": 15.0,
     "max_safe_trunk_lateral_deg": 10.0,
     "max_safe_pelvis_drop_deg": 8.0,
@@ -2985,7 +2985,7 @@ def create_charts(df, report, fps):
     fig.add_hline(y=THRESHOLDS["min_safe_knee_flexion_peak"], line_dash="dot", line_color="#ef5350", row=1, col=1)
 
     fig.add_trace(go.Scatter(x=df["time_s"], y=df["left_knee_valgus_2d"], name="Left Valgus", line=dict(color="#4fc3f7"), showlegend=False), row=1, col=2)
-    fig.add_trace(go.Scatter(x=df["time_s"], y=df["right_knee_valgus_2d"], name="Right Valgus", line=dict(color="#f48fb1"), showlegend=False), row=1, col=2)
+    fig.add_trace(go.Scatter(x=df["time_s"], y=df["right_knee_valgus_2d"].abs(), name="Right Valgus", line=dict(color="#f48fb1"), showlegend=False), row=1, col=2)
     fig.add_hline(y=THRESHOLDS["max_safe_valgus_deg"], line_dash="dot", line_color="#ef5350", row=1, col=2)
     fig.add_hline(y=0, line_width=0.5, line_color="#aab4c4", row=1, col=2)
 
