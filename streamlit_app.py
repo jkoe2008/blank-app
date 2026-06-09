@@ -1278,7 +1278,7 @@ def analyze_video(video_path, view="frontal"):
                 fd.right_ankle_df = angle_3pt_2d(R_KNEE, R_ANKLE, R_FOOT)
 
                 fd.left_knee_valgus_2d = valgus_2d_frontal(L_HIP, L_KNEE, L_ANKLE)
-                fd.right_knee_valgus_2d = -valgus_2d_frontal(R_HIP, R_KNEE, R_ANKLE)
+                fd.right_knee_valgus_2d = valgus_2d_frontal(R_HIP, R_KNEE, R_ANKLE)
                 fd.left_knee_rotation = 0.0
                 fd.right_knee_rotation = 0.0
                 fd.pelvis_drop = pelvis_drop_2d(L_HIP, R_HIP)
@@ -1626,7 +1626,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         start=frontal_start,
         n=frontal_window,
         percentile=90,
-        positive_only=True,
+        absolute=True,
     )
     report.peak_right_valgus = robust_window_value(
         df,
@@ -1634,7 +1634,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         start=frontal_start,
         n=frontal_window,
         percentile=90,
-        positive_only=True,
+        absolute=True,
     )
 
     if "pelvis_drop" in df.columns:
@@ -1745,7 +1745,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
                 continue
 
             peak_start = ic if ic is not None else 0
-            valgus_series = smooth_metric_column(df, col).iloc[peak_start:peak_start + frontal_window]
+            valgus_series = smooth_metric_column(df, col).iloc[peak_start:peak_start + frontal_window].abs()
             persistent = consecutive_abnormal(
                 valgus_series,
                 T["max_safe_valgus_deg"],
@@ -1757,7 +1757,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
                 sev = (val - T["max_safe_valgus_deg"]) / 20.0
                 acl_score += 15 * min(sev, 1.0)
                 gen_score += 12 * min(sev, 1.0)
-                flags.append(f"🚨 {side} 2D valgus - {val:.1f}° inward collapse")
+                flags.append(f"🚨 {side} 2D frontal knee displacement / valgus proxy - {val:.1f}°")
                 recs.append(f"PRIORITY: {side} valgus control. Strengthen hip abductors. Consider PEP or FIFA 11+.")
             elif val > T["max_safe_valgus_deg"]:
                 flags.append(f"ℹ️ {side} valgus signal suppressed due to confidence/persistence gating.")
