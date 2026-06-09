@@ -1061,6 +1061,34 @@ def fill_smooth(values):
     return y
 
 
+def smooth_metric_column(df, col):
+    if col not in df.columns:
+        return pd.Series(dtype=float)
+    smooth_col = f"{col}_smooth"
+    if smooth_col not in df.columns:
+        df[smooth_col] = fill_smooth(safe_series(df, col).to_numpy(dtype=float))
+    return safe_series(df, smooth_col)
+
+
+def robust_window_value(df, col, start=0, n=90, percentile=90, absolute=False, positive_only=False):
+    series = smooth_metric_column(df, col)
+    if series.empty:
+        return None
+
+    window = pd.to_numeric(series.iloc[start:start + n], errors="coerce").dropna()
+    if absolute:
+        window = window.abs()
+    if positive_only:
+        positive = window[window > 0]
+        if positive.empty:
+            return 0.0
+        window = positive
+
+    if window.empty:
+        return None
+    return float(np.nanpercentile(window, percentile))
+
+
 def detect_initial_contact_voting(df, fps):
     min_frames = max(8, int(0.25 * fps))
     if len(df) < min_frames:
@@ -1554,11 +1582,6 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         w = df[col].iloc[start:start + n]
         return w.dropna().min() if not w.dropna().empty else None
 
-    def peak_max(col, n=90):
-        start = ic if ic is not None else 0
-        w = df[col].iloc[start:start + n]
-        return w.dropna().max() if not w.dropna().empty else None
-
     measurement_quality_flags = []
     suppress_ic_knee_scoring = False
 
@@ -1595,29 +1618,46 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     report.right_knee_flexion_peak = peak_min("right_knee_flexion")
     report.left_hip_flexion_at_IC = at_ic("left_hip_flexion")
     report.right_hip_flexion_at_IC = at_ic("right_hip_flexion")
-    report.peak_left_valgus = peak_max("left_knee_valgus_2d")
-    report.peak_right_valgus = peak_max("right_knee_valgus_2d")
+    frontal_start = ic if ic is not None else 0
+    frontal_window = max(12, int(0.75 * fps)) if fps else 90
+    report.peak_left_valgus = robust_window_value(
+        df,
+        "left_knee_valgus_2d",
+        start=frontal_start,
+        n=frontal_window,
+        percentile=90,
+        positive_only=True,
+    )
+    report.peak_right_valgus = robust_window_value(
+        df,
+        "right_knee_valgus_2d",
+        start=frontal_start,
+        n=frontal_window,
+        percentile=90,
+        positive_only=True,
+    )
 
     if "pelvis_drop" in df.columns:
-        pelvis_start = ic if ic is not None else 0
-        pelvis_series = safe_series(df, "pelvis_drop")
-        df["pelvis_drop_smooth"] = fill_smooth(pelvis_series.to_numpy(dtype=float))
-        pelvis_window = pd.to_numeric(
-            df["pelvis_drop_smooth"].iloc[pelvis_start:pelvis_start + 90],
-            errors="coerce",
-        ).dropna().abs()
-        report.peak_pelvis_drop = float(np.nanpercentile(pelvis_window, 90)) if not pelvis_window.empty else None
+        report.peak_pelvis_drop = robust_window_value(
+            df,
+            "pelvis_drop",
+            start=frontal_start,
+            n=frontal_window,
+            percentile=90,
+            absolute=True,
+        )
     else:
         report.peak_pelvis_drop = None
 
-    post_ic_start = ic if ic is not None else 0
-    post_ic_df = df.iloc[post_ic_start:]
-
-    report.max_lateral_trunk_lean = (
-        post_ic_df["lateral_trunk_lean"].abs().dropna().max()
-        if not post_ic_df.empty and "lateral_trunk_lean" in post_ic_df.columns
-        else None
+    report.max_lateral_trunk_lean = robust_window_value(
+        df,
+        "lateral_trunk_lean",
+        start=frontal_start,
+        n=frontal_window,
+        percentile=90,
+        absolute=True,
     )
+    post_ic_df = df.iloc[frontal_start:]
     report.max_anterior_trunk_lean = (
         post_ic_df["anterior_trunk_lean"].dropna().max()
         if not post_ic_df.empty and "anterior_trunk_lean" in post_ic_df.columns
@@ -1705,7 +1745,7 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
                 continue
 
             peak_start = ic if ic is not None else 0
-            valgus_series = safe_series(df.iloc[peak_start:peak_start + 90], col)
+            valgus_series = smooth_metric_column(df, col).iloc[peak_start:peak_start + frontal_window]
             persistent = consecutive_abnormal(
                 valgus_series,
                 T["max_safe_valgus_deg"],
