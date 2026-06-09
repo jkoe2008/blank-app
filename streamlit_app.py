@@ -1900,11 +1900,10 @@ def detect_failures(report, df, fps):
         failures.append("camera angle invalid or unsupported")
     if report.ic_frame is None:
         failures.append("initial contact could not be detected reliably")
-    if report.ic_vote_details.get("ic_confidence", 0.0) < 0.60:
+    if report.ic_vote_details.get("ic_confidence", 0.0) < 0.45:
         failures.append("initial contact confidence is low")
     if report.ic_vote_details.get("vote_spread_frames", 0) > report.ic_vote_details.get("vote_spread_limit_frames", max(3, int(0.08 * fps))):
         failures.append("initial contact signals disagree; IC timing has low confidence")
-    return failures
 
 @st.cache_data(show_spinner=False)
 def analyze_video(video_path, view="frontal"):
@@ -2472,9 +2471,10 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     report.flags = flags
     report.recommendations = recs
     report.movement_profile = classify_movement_profile(report)
-    report.progressions = build_progressions(report)
 
     report = apply_view_metric_policy(report, cam_angle)
+
+    report.progressions = build_progressions(report)
 
     report = add_uncertainty(report)
     report.failure_flags = detect_failures(report, df, fps)
