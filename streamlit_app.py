@@ -859,6 +859,342 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+    :root {
+        --surface: #ffffff;
+        --page: #f5f7fb;
+        --panel: #f8fafc;
+        --line: #d8dee9;
+        --muted-line: #e7ebf2;
+        --text: #172033;
+        --muted: #667085;
+        --subtle: #8a94a6;
+        --primary: #0f766e;
+        --primary-dark: #115e59;
+        --navy: #1f2a44;
+        --warning: #b45309;
+        --danger: #b42318;
+        --success: #067647;
+    }
+
+    .stApp {
+        background: var(--page) !important;
+        color: var(--text) !important;
+    }
+
+    html, body, [class*="css"] {
+        font-family: Inter, "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+        color: var(--text);
+    }
+
+    h1, h2, h3, h4, h5, h6,
+    [data-testid="stMarkdownContainer"] h1,
+    [data-testid="stMarkdownContainer"] h2,
+    [data-testid="stMarkdownContainer"] h3 {
+        color: var(--text) !important;
+        letter-spacing: 0;
+    }
+
+    p, li, label,
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] li {
+        color: var(--muted);
+    }
+
+    .block-container {
+        max-width: 1220px;
+        padding-top: 1.4rem;
+        padding-bottom: 3rem;
+    }
+
+    section[data-testid="stSidebar"] {
+        background: #ffffff !important;
+        border-right: 1px solid var(--line);
+    }
+
+    div[data-testid="stSidebarContent"] {
+        padding: 1.25rem 1rem;
+    }
+
+    div[data-testid="stSidebarContent"] [data-testid="stMarkdownContainer"] p,
+    div[data-testid="stSidebarContent"] label {
+        color: var(--muted) !important;
+    }
+
+    .app-shell {
+        background: var(--surface) !important;
+        border: 1px solid var(--line) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05) !important;
+        padding: 1.35rem 1.45rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .app-kicker {
+        color: var(--primary) !important;
+        font-size: 0.74rem !important;
+        letter-spacing: 0.08em !important;
+        font-weight: 800 !important;
+    }
+
+    .app-title {
+        color: var(--text) !important;
+        font-size: 2.1rem !important;
+        line-height: 1.12 !important;
+        font-weight: 800 !important;
+    }
+
+    .app-subtitle {
+        color: var(--muted) !important;
+        font-size: 0.98rem !important;
+        max-width: 820px !important;
+    }
+
+    .workflow {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 0.65rem !important;
+    }
+
+    .workflow-step {
+        background: var(--panel) !important;
+        border: 1px solid var(--muted-line) !important;
+        border-radius: 8px !important;
+        padding: 0.8rem !important;
+        box-shadow: none !important;
+    }
+
+    .workflow-num {
+        color: var(--primary) !important;
+        font-size: 0.74rem !important;
+    }
+
+    .workflow-label {
+        color: var(--text) !important;
+        font-size: 0.9rem !important;
+    }
+
+    .workflow-note,
+    .section-lead,
+    .empty-copy,
+    .summary-note,
+    .result-strip-note,
+    .clinical-card-note,
+    .download-copy,
+    .rx-trigger,
+    .rx-advance {
+        color: var(--muted) !important;
+    }
+
+    .empty-state,
+    .summary-panel,
+    .summary-box,
+    .clinical-section,
+    .clinical-banner,
+    .download-panel,
+    .rec-panel,
+    .rx-card,
+    .score-card-premium,
+    .result-strip-card,
+    .clinical-card {
+        background: var(--surface) !important;
+        border: 1px solid var(--line) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05) !important;
+    }
+
+    .empty-state {
+        border-style: dashed !important;
+        padding: 1.1rem !important;
+    }
+
+    .empty-title,
+    .summary-value,
+    .summary-box-title,
+    .clinical-section-title,
+    .download-title,
+    .rec-title,
+    .rx-title,
+    .rx-exercise,
+    .clinical-card-value,
+    .result-strip-value {
+        color: var(--text) !important;
+    }
+
+    .summary-label,
+    .clinical-card-label,
+    .result-strip-label,
+    .score-card-label {
+        color: var(--subtle) !important;
+    }
+
+    .stMetric {
+        background: var(--surface) !important;
+        border: 1px solid var(--line) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05) !important;
+    }
+
+    [data-testid="stMetricValue"] {
+        color: var(--navy) !important;
+        font-family: "IBM Plex Mono", Consolas, monospace !important;
+    }
+
+    .stTabs [data-baseweb="tab-list"] {
+        background: transparent !important;
+        border: 0 !important;
+        border-bottom: 1px solid var(--line) !important;
+        border-radius: 0 !important;
+        gap: 1rem !important;
+        padding: 0 !important;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        background: transparent !important;
+        border-radius: 0 !important;
+        color: var(--muted) !important;
+        font-weight: 700 !important;
+        padding: 0.8rem 0.1rem !important;
+    }
+
+    .stTabs [aria-selected="true"] {
+        color: var(--primary-dark) !important;
+        border-bottom: 2px solid var(--primary) !important;
+    }
+
+    div[data-testid="stFileUploader"] {
+        background: var(--surface) !important;
+        border: 1px dashed #98a2b3 !important;
+        border-radius: 10px !important;
+        padding: 0.9rem !important;
+    }
+
+    div.stButton > button,
+    div[data-testid="stDownloadButton"] button {
+        background: var(--primary) !important;
+        color: #ffffff !important;
+        border: 1px solid var(--primary-dark) !important;
+        border-radius: 8px !important;
+        box-shadow: none !important;
+        font-weight: 750 !important;
+    }
+
+    div.stButton > button:hover,
+    div[data-testid="stDownloadButton"] button:hover {
+        background: var(--primary-dark) !important;
+        border-color: var(--primary-dark) !important;
+    }
+
+    input, textarea,
+    [data-baseweb="select"] > div {
+        background: #ffffff !important;
+        border-color: var(--line) !important;
+        color: var(--text) !important;
+        border-radius: 8px !important;
+    }
+
+    .score-number {
+        color: var(--navy) !important;
+        font-size: 2.35rem !important;
+    }
+
+    .score-denom {
+        color: var(--subtle) !important;
+    }
+
+    .score-bar {
+        background: #edf1f7 !important;
+    }
+
+    .score-fill {
+        background: linear-gradient(90deg, #079455, #dc6803, #d92d20) !important;
+    }
+
+    .badge-low,
+    .decision-green {
+        background: #ecfdf3 !important;
+        color: var(--success) !important;
+        border-color: #abefc6 !important;
+    }
+
+    .badge-moderate,
+    .decision-yellow {
+        background: #fffaeb !important;
+        color: var(--warning) !important;
+        border-color: #fedf89 !important;
+    }
+
+    .badge-high,
+    .badge-very-high,
+    .decision-red {
+        background: #fef3f2 !important;
+        color: var(--danger) !important;
+        border-color: #fecdca !important;
+    }
+
+    .flag-item,
+    .rec-item,
+    .rx-level,
+    .pro-flag-card {
+        background: var(--panel) !important;
+        border: 1px solid var(--muted-line) !important;
+        border-radius: 8px !important;
+        box-shadow: none !important;
+        color: var(--text) !important;
+    }
+
+    .pro-flag-title,
+    .pro-flag-body,
+    .pro-flag-meta {
+        color: var(--text) !important;
+    }
+
+    .pro-flag-body,
+    .pro-flag-meta {
+        color: var(--muted) !important;
+    }
+
+    .side-table th {
+        background: #eef2f6 !important;
+        color: var(--text) !important;
+    }
+
+    .side-table td {
+        background: #ffffff !important;
+        color: var(--text) !important;
+        border-top: 1px solid var(--muted-line) !important;
+    }
+
+    .stDataFrame,
+    div[data-testid="stTable"],
+    .stExpander {
+        border-radius: 10px !important;
+        border-color: var(--line) !important;
+        background: var(--surface) !important;
+    }
+
+    hr {
+        border-color: var(--line) !important;
+    }
+
+    @media (max-width: 900px) {
+        .workflow,
+        .clinical-grid,
+        .result-strip,
+        .score-band,
+        .summary-layout,
+        .rx-level-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .app-title {
+            font-size: 1.65rem !important;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
 mp_pose = mp.solutions.pose
 LM = mp_pose.PoseLandmark
 
@@ -1149,13 +1485,25 @@ def detect_initial_contact_voting(df, fps):
                 break
 
     if not votes:
-        return None, {"reason": "no usable IC deceleration signals"}
+        return None, {
+            "reason": "no usable IC deceleration signals",
+            "ic_confidence": 0.0,
+            "vote_count": 0,
+        }
 
     vals = list(votes.values())
     median_ic = int(round(float(np.median(vals))))
+    spread = int(max(vals) - min(vals)) if len(vals) > 1 else 0
+    spread_limit = max(3, int(0.08 * fps))
+    vote_score = min(len(vals) / 3.0, 1.0)
+    spread_score = max(0.0, 1.0 - (spread / max(spread_limit, 1)))
+    ic_confidence = round(float(0.55 * vote_score + 0.45 * spread_score), 3)
     return median_ic, {
         "votes": votes,
-        "vote_spread_frames": int(max(vals) - min(vals)) if len(vals) > 1 else 0,
+        "vote_count": len(vals),
+        "vote_spread_frames": spread,
+        "vote_spread_limit_frames": spread_limit,
+        "ic_confidence": ic_confidence,
         "method": "deceleration-event voting v2",
     }
 
@@ -1216,17 +1564,58 @@ def compute_temporal_features(df, ic, fps):
 
 def detect_failures(report, df, fps):
     failures = []
+    if df.empty:
+        return ["no analyzable video frames"]
+
     if len(df) < max(15, int(0.5 * fps)):
         failures.append("insufficient frames for stable landing analysis")
-    if report.pose_detection_rate < 0.70:
-        failures.append("pose tracking unreliable: low detection rate")
-    if report.mean_visibility < 0.65:
-        failures.append("low landmark visibility / possible occlusion")
+
+    if report.ic_frame is not None:
+        q_start = max(0, report.ic_frame - int(0.15 * fps))
+        q_end = min(len(df), report.ic_frame + max(2, int(0.35 * fps)))
+        quality_df = df.iloc[q_start:q_end]
+    else:
+        quality_df = df
+
+    landing_detection_rate = float(quality_df["pose_detected"].mean()) if "pose_detected" in quality_df and not quality_df.empty else 0.0
+    landing_visibility_series = safe_series(quality_df, "mean_landmark_visibility").dropna()
+    landing_visibility = float(landing_visibility_series.mean()) if not landing_visibility_series.empty else 0.0
+    usable_landing_frames = int(
+        (
+            (quality_df["pose_detected"] == True)
+            & (safe_series(quality_df, "mean_landmark_visibility") >= VISIBILITY_THRESHOLD)
+        ).sum()
+    ) if "pose_detected" in quality_df and not quality_df.empty else 0
+
+    report.ic_vote_details["landing_quality_window"] = {
+        "start_frame": int(quality_df.index.min()) if not quality_df.empty else None,
+        "end_frame": int(quality_df.index.max()) if not quality_df.empty else None,
+        "pose_detection_rate": round(landing_detection_rate, 3),
+        "mean_landmark_visibility": round(landing_visibility, 3),
+        "usable_frames": usable_landing_frames,
+    }
+
+    min_usable_landing_frames = max(6, int(0.18 * fps))
+    if landing_detection_rate < 0.85:
+        failures.append("landing-window pose tracking unreliable")
+    elif report.pose_detection_rate < 0.70:
+        failures.append("overall pose tracking is low; trim video or use a cleaner capture")
+
+    if landing_visibility < 0.75:
+        failures.append("landing-window landmark visibility is too low")
+    elif report.mean_visibility < 0.65:
+        failures.append("overall landmark visibility is low; review capture quality")
+
+    if usable_landing_frames < min_usable_landing_frames:
+        failures.append("too few usable frames around landing for stable interpretation")
+
     if report.camera_angle not in ["frontal", "side"]:
         failures.append("camera angle invalid or unsupported")
     if report.ic_frame is None:
         failures.append("initial contact could not be detected reliably")
-    if report.ic_vote_details.get("vote_spread_frames", 0) > max(3, int(0.10 * fps)):
+    if report.ic_vote_details.get("ic_confidence", 0.0) < 0.60:
+        failures.append("initial contact confidence is low")
+    if report.ic_vote_details.get("vote_spread_frames", 0) > report.ic_vote_details.get("vote_spread_limit_frames", max(3, int(0.08 * fps))):
         failures.append("initial contact signals disagree; IC timing has low confidence")
     return failures
 
@@ -2422,32 +2811,32 @@ def build_pdf_report(report, patient_id, clinician_name, fig=None):
 def display_premium_header():
     st.markdown("""
     <div class="app-shell">
-        <div class="app-kicker">Clinical Landing Screen • Video-Based Decision Support</div>
-        <h1 class="app-title">Landing Mechanics Clinical Screen</h1>
+        <div class="app-kicker">Clinical Movement Screen</div>
+        <h1 class="app-title">Landing Mechanics Assessment</h1>
         <div class="app-subtitle">
-            Convert a landing video into a structured clinical readout: risk profile, confidence quality,
-            side-specific findings, return-to-sport guidance, and a clinic-ready report.
+            Review frontal and side-view landing videos with clear metric validity, quality checks,
+            risk summaries, corrective priorities, and exportable clinical documentation.
         </div>
         <div class="workflow">
             <div class="workflow-step">
                 <div class="workflow-num">01</div>
-                <div class="workflow-label">Enter Intake</div>
-                <div class="workflow-note">Symptoms, limb context, sport, and phase.</div>
+                <div class="workflow-label">Intake</div>
+                <div class="workflow-note">Patient context and test status.</div>
             </div>
             <div class="workflow-step">
                 <div class="workflow-num">02</div>
-                <div class="workflow-label">Upload Video</div>
-                <div class="workflow-note">Best with a clear frontal landing view.</div>
+                <div class="workflow-label">Capture</div>
+                <div class="workflow-note">Frontal and/or side view video.</div>
             </div>
             <div class="workflow-step">
                 <div class="workflow-num">03</div>
-                <div class="workflow-label">Review Decision</div>
-                <div class="workflow-note">Risk, quality, and RTS guidance.</div>
+                <div class="workflow-label">Review</div>
+                <div class="workflow-note">Risk, validity, and quality flags.</div>
             </div>
             <div class="workflow-step">
                 <div class="workflow-num">04</div>
-                <div class="workflow-label">Export Report</div>
-                <div class="workflow-note">PDF, CSV, and JSON outputs.</div>
+                <div class="workflow-label">Export</div>
+                <div class="workflow-note">PDF, CSV, and JSON records.</div>
             </div>
         </div>
     </div>
@@ -2456,10 +2845,10 @@ def display_premium_header():
 def display_upload_guidance():
     st.markdown("""
     <div class="empty-state">
-        <div class="empty-title">Start with a clean landing video</div>
+        <div class="empty-title">Ready for video review</div>
         <p class="empty-copy">
-            Use a frontal view with the full body visible. Complete the clinical intake in the sidebar,
-            then upload a drop landing, jump landing, or similar lower-extremity screen.
+            Complete the intake, then upload a frontal or side-view landing video. The report will only
+            score metrics that are appropriate for the selected view.
         </p>
     </div>
     """, unsafe_allow_html=True)
