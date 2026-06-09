@@ -1195,6 +1195,293 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+    :root {
+        --dark-bg: #0b1020;
+        --dark-panel: #111827;
+        --dark-panel-2: #172033;
+        --dark-line: rgba(148, 163, 184, 0.20);
+        --dark-line-strong: rgba(148, 163, 184, 0.34);
+        --dark-text: #f8fafc;
+        --dark-muted: #a7b0c0;
+        --dark-subtle: #7f8aa3;
+        --dark-primary: #2dd4bf;
+        --dark-primary-2: #38bdf8;
+        --dark-warning: #f59e0b;
+        --dark-danger: #ef4444;
+        --dark-success: #22c55e;
+    }
+
+    .stApp {
+        background:
+            radial-gradient(circle at top left, rgba(45, 212, 191, 0.08), transparent 34rem),
+            linear-gradient(180deg, #0b1020 0%, #080c18 100%) !important;
+        color: var(--dark-text) !important;
+    }
+
+    html, body, [class*="css"] {
+        color: var(--dark-text) !important;
+        font-family: Inter, "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    }
+
+    h1, h2, h3, h4, h5, h6,
+    [data-testid="stMarkdownContainer"] h1,
+    [data-testid="stMarkdownContainer"] h2,
+    [data-testid="stMarkdownContainer"] h3 {
+        color: var(--dark-text) !important;
+        letter-spacing: 0 !important;
+    }
+
+    p, li, label,
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] li {
+        color: var(--dark-muted) !important;
+    }
+
+    .block-container {
+        max-width: 1200px !important;
+        padding-top: 1.4rem !important;
+        padding-bottom: 3.5rem !important;
+    }
+
+    section[data-testid="stSidebar"] {
+        background: #0f1629 !important;
+        border-right: 1px solid var(--dark-line) !important;
+    }
+
+    div[data-testid="stSidebarContent"] {
+        padding-top: 1.25rem !important;
+    }
+
+    div[data-testid="stSidebarContent"] [data-testid="stMarkdownContainer"] p,
+    div[data-testid="stSidebarContent"] label {
+        color: var(--dark-muted) !important;
+    }
+
+    .app-shell,
+    .empty-state,
+    .summary-panel,
+    .summary-box,
+    .clinical-section,
+    .clinical-banner,
+    .download-panel,
+    .rec-panel,
+    .rx-card,
+    .score-card-premium,
+    .result-strip-card,
+    .clinical-card,
+    .stMetric {
+        background: rgba(17, 24, 39, 0.88) !important;
+        border: 1px solid var(--dark-line) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22) !important;
+    }
+
+    .app-shell {
+        padding: 1.35rem 1.45rem !important;
+        margin-bottom: 1.05rem !important;
+    }
+
+    .app-kicker,
+    .workflow-num,
+    .rx-level-name {
+        color: var(--dark-primary) !important;
+        letter-spacing: 0.08em !important;
+    }
+
+    .app-title {
+        color: var(--dark-text) !important;
+        font-size: 2.15rem !important;
+        line-height: 1.1 !important;
+        font-weight: 850 !important;
+    }
+
+    .app-subtitle,
+    .workflow-note,
+    .section-lead,
+    .empty-copy,
+    .summary-note,
+    .result-strip-note,
+    .clinical-card-note,
+    .download-copy,
+    .rx-trigger,
+    .rx-advance {
+        color: var(--dark-muted) !important;
+    }
+
+    .workflow-step,
+    .flag-item,
+    .rec-item,
+    .rx-level,
+    .pro-flag-card {
+        background: rgba(23, 32, 51, 0.78) !important;
+        border: 1px solid var(--dark-line) !important;
+        border-radius: 9px !important;
+        box-shadow: none !important;
+        color: var(--dark-text) !important;
+    }
+
+    .workflow-label,
+    .empty-title,
+    .summary-value,
+    .summary-box-title,
+    .clinical-section-title,
+    .download-title,
+    .rec-title,
+    .rx-title,
+    .rx-exercise,
+    .clinical-card-value,
+    .result-strip-value,
+    .pro-flag-title {
+        color: var(--dark-text) !important;
+    }
+
+    .summary-label,
+    .clinical-card-label,
+    .result-strip-label,
+    .score-card-label,
+    .pro-flag-meta {
+        color: var(--dark-subtle) !important;
+    }
+
+    .pro-flag-body {
+        color: var(--dark-muted) !important;
+    }
+
+    [data-testid="stMetricValue"],
+    .score-number {
+        color: var(--dark-primary-2) !important;
+        font-family: "IBM Plex Mono", Consolas, monospace !important;
+    }
+
+    .score-denom {
+        color: var(--dark-subtle) !important;
+    }
+
+    .score-bar {
+        background: rgba(51, 65, 85, 0.85) !important;
+    }
+
+    .score-fill {
+        background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444) !important;
+    }
+
+    .stTabs [data-baseweb="tab-list"] {
+        background: rgba(17, 24, 39, 0.80) !important;
+        border: 1px solid var(--dark-line) !important;
+        border-radius: 10px !important;
+        gap: 0.35rem !important;
+        padding: 0.3rem !important;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        background: transparent !important;
+        border-radius: 8px !important;
+        color: var(--dark-muted) !important;
+        font-weight: 700 !important;
+        padding: 0.55rem 0.85rem !important;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background: rgba(45, 212, 191, 0.13) !important;
+        color: var(--dark-text) !important;
+        border: 1px solid rgba(45, 212, 191, 0.22) !important;
+    }
+
+    div[data-testid="stFileUploader"] {
+        background: rgba(17, 24, 39, 0.82) !important;
+        border: 1px dashed var(--dark-line-strong) !important;
+        border-radius: 10px !important;
+    }
+
+    div.stButton > button,
+    div[data-testid="stDownloadButton"] button {
+        background: #0f766e !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(45, 212, 191, 0.35) !important;
+        border-radius: 8px !important;
+        box-shadow: none !important;
+        font-weight: 750 !important;
+    }
+
+    div.stButton > button:hover,
+    div[data-testid="stDownloadButton"] button:hover {
+        background: #115e59 !important;
+        border-color: rgba(45, 212, 191, 0.55) !important;
+    }
+
+    input, textarea,
+    [data-baseweb="select"] > div {
+        background: #0f1629 !important;
+        border-color: var(--dark-line) !important;
+        color: var(--dark-text) !important;
+        border-radius: 8px !important;
+    }
+
+    .badge-low,
+    .decision-green {
+        background: rgba(34, 197, 94, 0.13) !important;
+        color: #86efac !important;
+        border-color: rgba(134, 239, 172, 0.22) !important;
+    }
+
+    .badge-moderate,
+    .decision-yellow {
+        background: rgba(245, 158, 11, 0.14) !important;
+        color: #fcd34d !important;
+        border-color: rgba(252, 211, 77, 0.22) !important;
+    }
+
+    .badge-high,
+    .badge-very-high,
+    .decision-red {
+        background: rgba(239, 68, 68, 0.13) !important;
+        color: #fca5a5 !important;
+        border-color: rgba(252, 165, 165, 0.22) !important;
+    }
+
+    .side-table th {
+        background: rgba(30, 41, 59, 0.95) !important;
+        color: var(--dark-text) !important;
+    }
+
+    .side-table td {
+        background: rgba(17, 24, 39, 0.78) !important;
+        color: var(--dark-muted) !important;
+        border-top: 1px solid var(--dark-line) !important;
+    }
+
+    .stDataFrame,
+    div[data-testid="stTable"],
+    .stExpander {
+        border-radius: 10px !important;
+        border-color: var(--dark-line) !important;
+        background: rgba(17, 24, 39, 0.82) !important;
+    }
+
+    hr {
+        border-color: var(--dark-line) !important;
+    }
+
+    @media (max-width: 900px) {
+        .workflow,
+        .clinical-grid,
+        .result-strip,
+        .score-band,
+        .summary-layout,
+        .rx-level-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .app-title {
+            font-size: 1.7rem !important;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
 mp_pose = mp.solutions.pose
 LM = mp_pose.PoseLandmark
 
