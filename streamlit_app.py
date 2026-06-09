@@ -2429,9 +2429,9 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
             )
 
             if val > T["max_safe_valgus_deg"] and persistent and confidence_ok:
-                sev = (val - T["max_safe_valgus_deg"]) / 20.0
-                acl_score += 15 * min(sev, 1.0)
-                gen_score += 12 * min(sev, 1.0)
+                sev = (val - T["max_safe_valgus_deg"]) / 12.0
+                acl_score += 25 * min(sev, 1.0)
+                gen_score += 20 * min(sev, 1.0)
                 flags.append(f"🚨 {side} 2D frontal knee displacement / valgus proxy - {val:.1f}°")
                 recs.append(f"PRIORITY: {side} valgus control. Strengthen hip abductors. Consider PEP or FIFA 11+.")
             elif val > T["max_safe_valgus_deg"]:
@@ -2446,8 +2446,8 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
 
         if report.max_lateral_trunk_lean is not None and report.max_lateral_trunk_lean > T["max_safe_trunk_lateral_deg"] and confidence_ok:
             sev = (report.max_lateral_trunk_lean - T["max_safe_trunk_lateral_deg"]) / 20.0
-            acl_score += 10 * min(sev, 1.0)
-            gen_score += 8 * min(sev, 1.0)
+            acl_score += 15 * min(sev, 1.0)
+            gen_score += 12 * min(sev, 1.0)
             flags.append(f"⚠️ Lateral trunk lean - {report.max_lateral_trunk_lean:.1f}°")
             recs.append("Improve lateral core stability.")
 
