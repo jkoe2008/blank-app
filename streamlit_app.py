@@ -29,7 +29,6 @@ except Exception:
 
 st.markdown("""
 <style>
-.stApp { background-color:#0e1117; color:#ffffff; }
 h1,h2,h3 { color:#ffffff; }
 .main-header {
     font-size:2.5rem; font-weight:700;
