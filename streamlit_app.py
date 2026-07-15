@@ -1284,6 +1284,57 @@ st.markdown("""
         margin-bottom: 1.05rem !important;
     }
 
+    .app-meta {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.6rem;
+        margin-top: 0.85rem;
+    }
+
+    .app-meta-item {
+        background: rgba(23, 32, 51, 0.72);
+        border: 1px solid var(--dark-line);
+        border-radius: 8px;
+        padding: 0.6rem 0.7rem;
+    }
+
+    .app-meta-label {
+        color: var(--dark-subtle);
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 800;
+    }
+
+    .app-meta-value {
+        color: var(--dark-text);
+        font-size: 0.88rem;
+        font-weight: 700;
+        margin-top: 0.15rem;
+        line-height: 1.3;
+    }
+
+    .flow-shell {
+        background: rgba(17, 24, 39, 0.88);
+        border: 1px solid var(--dark-line);
+        border-radius: 10px;
+        padding: 0.95rem 1rem;
+        margin: 0.85rem 0 0.75rem 0;
+    }
+
+    .flow-title {
+        color: var(--dark-text);
+        font-size: 1rem;
+        font-weight: 800;
+        margin-bottom: 0.2rem;
+    }
+
+    .flow-note {
+        color: var(--dark-muted);
+        font-size: 0.86rem;
+        line-height: 1.4;
+    }
+
     .app-kicker,
     .workflow-num,
     .rx-level-name {
@@ -1466,6 +1517,7 @@ st.markdown("""
     }
 
     @media (max-width: 900px) {
+        .app-meta,
         .workflow,
         .clinical-grid,
         .result-strip,
@@ -3117,6 +3169,20 @@ def display_premium_header():
             Review frontal and side-view landing videos with clear metric validity, quality checks,
             risk summaries, corrective priorities, and exportable clinical documentation.
         </div>
+        <div class="app-meta">
+            <div class="app-meta-item">
+                <div class="app-meta-label">Screen Type</div>
+                <div class="app-meta-value">Single-session landing mechanics</div>
+            </div>
+            <div class="app-meta-item">
+                <div class="app-meta-label">Clinical Use</div>
+                <div class="app-meta-value">Triage and progression planning support</div>
+            </div>
+            <div class="app-meta-item">
+                <div class="app-meta-label">Output</div>
+                <div class="app-meta-value">Risk summary, quality context, and exportable report</div>
+            </div>
+        </div>
         <div class="workflow">
             <div class="workflow-step">
                 <div class="workflow-num">01</div>
@@ -3258,21 +3324,30 @@ def main():
 
         st.caption("Screening only. Not a diagnosis. Single-camera estimates are sensitive to camera angle, clothing, occlusion, lighting, and calibration.")
 
-    st.subheader("Upload Landing Videos")
+    st.markdown("""
+    <div class="flow-shell">
+        <div class="flow-title">Step 2 — Upload Landing Video</div>
+        <div class="flow-note">Upload frontal and/or side view files. The analysis and scoring remain view-aware and only evaluate valid metrics for each selected perspective.</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    frontal_file = st.file_uploader(
-        "Frontal view video",
-        type=["mp4", "mov", "avi", "webm"],
-        help="Use for valgus, pelvis drop, lateral trunk lean, and frontal-plane control.",
-        key="frontal_video",
-    )
+    upload_col_1, upload_col_2 = st.columns(2)
 
-    side_file = st.file_uploader(
-        "Side view video",
-        type=["mp4", "mov", "avi", "webm"],
-        help="Use for knee flexion, hip flexion, anterior trunk lean, and landing depth.",
-        key="side_video",
-    )
+    with upload_col_1:
+        frontal_file = st.file_uploader(
+            "Frontal view video",
+            type=["mp4", "mov", "avi", "webm"],
+            help="Use for valgus, pelvis drop, lateral trunk lean, and frontal-plane control.",
+            key="frontal_video",
+        )
+
+    with upload_col_2:
+        side_file = st.file_uploader(
+            "Side view video",
+            type=["mp4", "mov", "avi", "webm"],
+            help="Use for knee flexion, hip flexion, anterior trunk lean, and landing depth.",
+            key="side_video",
+        )
 
     uploaded_file = frontal_file or side_file
     selected_view = "frontal" if frontal_file is not None else "side"
@@ -3343,6 +3418,16 @@ def main():
 
         st.info(f"Camera view selected by clinician: {report.camera_angle} (quality-adjusted confidence: {report.camera_confidence:.0%})")
         st.info(f"Movement profile: {report.movement_profile}")
+
+        st.markdown("""
+        <div class="flow-shell">
+            <div class="flow-title">Step 3 — Clinical Results Overview</div>
+            <div class="flow-note">Review return-to-sport guidance, interpretation confidence, and recommended next step before moving into detailed tabs.</div>
+        </div>
+        """, unsafe_allow_html=True)
+        display_result_strip(report)
+        display_executive_summary(report)
+        st.divider()
 
         with st.expander("Diagnostic Data"):
             st.write(f"Left knee flexion at IC: {report.left_knee_flexion_at_IC}")
