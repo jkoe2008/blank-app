@@ -1720,7 +1720,10 @@ def detect_initial_contact_voting(df, fps):
     from scipy.signal import find_peaks
     votes = {}
 
-    ankle_y = df[["left_ankle_y", "right_ankle_y"]].mean(axis=1).to_numpy(dtype=float)
+    ankle_y = pd.concat(
+        [safe_series(df, "left_ankle_y"), safe_series(df, "right_ankle_y")],
+        axis=1,
+    ).mean(axis=1).to_numpy(dtype=float)
     ankle_y = fill_smooth(ankle_y)
     if not np.isnan(ankle_y).all():
         vel = fill_smooth(np.gradient(ankle_y))
@@ -1904,6 +1907,7 @@ def detect_failures(report, df, fps):
         failures.append("initial contact confidence is low")
     if report.ic_vote_details.get("vote_spread_frames", 0) > report.ic_vote_details.get("vote_spread_limit_frames", max(3, int(0.08 * fps))):
         failures.append("initial contact signals disagree; IC timing has low confidence")
+    return failures
 
 @st.cache_data(show_spinner=False)
 def analyze_video(video_path, view="frontal"):
@@ -1985,7 +1989,11 @@ def analyze_video(video_path, view="frontal"):
     cap.release()
     progress_bar.progress(1.0)
     status_text.text("Analysis complete!")
-    return records, fps, view, 1.0
+    pose_detection_rate = float(np.mean([1.0 if r.pose_detected else 0.0 for r in records])) if records else 0.0
+    vis_vals = [r.mean_landmark_visibility for r in records if r.mean_landmark_visibility is not None]
+    mean_visibility = float(np.mean(vis_vals)) if vis_vals else 0.0
+    camera_confidence = float(np.clip(0.15 + 0.5 * pose_detection_rate + 0.35 * mean_visibility, 0.15, 0.90))
+    return records, fps, view, camera_confidence
 
 def confidence_label(score):
     if score >= 0.75:
@@ -2151,8 +2159,9 @@ def train_hybrid_model(history_df):
     return {"model": model, "features": usable}, None
 
 def current_feature_row(report, features):
+    ic_flex_values = [180 - v for v in [report.left_knee_flexion_at_IC, report.right_knee_flexion_at_IC] if v is not None]
     vals = {
-        "knee_flexion_ic": np.nanmean([180 - v for v in [report.left_knee_flexion_at_IC, report.right_knee_flexion_at_IC] if v is not None]),
+        "knee_flexion_ic": float(np.mean(ic_flex_values)) if ic_flex_values else np.nan,
         "peak_valgus": np.nanmax([v for v in [report.peak_left_valgus, report.peak_right_valgus] if v is not None]) if report.peak_left_valgus is not None or report.peak_right_valgus is not None else np.nan,
         "pelvis_drop": report.peak_pelvis_drop,
         "lateral_trunk_lean": report.max_lateral_trunk_lean,
@@ -2234,8 +2243,10 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
     score_frontal = view == "frontal"
     score_sagittal = view == "side"
 
-    report.pose_detection_rate = float(df["pose_detected"].mean()) if not df.empty else 0.0
-    report.mean_visibility = float(df["mean_landmark_visibility"].dropna().mean()) if not df["mean_landmark_visibility"].dropna().empty else 0.0
+    pose_detected = safe_series(df, "pose_detected")
+    visibility = safe_series(df, "mean_landmark_visibility")
+    report.pose_detection_rate = float(pose_detected.mean()) if not pose_detected.empty else 0.0
+    report.mean_visibility = float(visibility.dropna().mean()) if not visibility.dropna().empty else 0.0
 
     ic, vote_details = detect_initial_contact_voting(df, fps)
     report.ic_frame = ic
@@ -2253,6 +2264,8 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         return float(w.median())
 
     def peak_min(col, n=90):
+        if col not in df.columns:
+            return None
         start = ic if ic is not None else 0
         w = df[col].iloc[start:start + n]
         return w.dropna().min() if not w.dropna().empty else None
@@ -2333,11 +2346,8 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         absolute=True,
     )
     post_ic_df = df.iloc[frontal_start:]
-    report.max_anterior_trunk_lean = (
-        post_ic_df["anterior_trunk_lean"].dropna().max()
-        if not post_ic_df.empty and "anterior_trunk_lean" in post_ic_df.columns
-        else None
-    )
+    anterior_series = safe_series(post_ic_df, "anterior_trunk_lean").dropna()
+    report.max_anterior_trunk_lean = anterior_series.max() if not anterior_series.empty else None
 
     if report.left_knee_flexion_at_IC is not None and report.right_knee_flexion_at_IC is not None:
         left_flex = 180 - report.left_knee_flexion_at_IC
@@ -2346,8 +2356,8 @@ def score_risk(records, fps, cam_angle="frontal", cam_conf=1.0, hybrid_model=Non
         if denom > 0:
             report.knee_flexion_asymmetry_pct = abs(left_flex - right_flex) / denom * 100
 
-    if ic is not None and "left_knee_flexion" in df.columns:
-        window = df["left_knee_flexion"].iloc[max(0, ic - 3):ic + 8].dropna()
+    if ic is not None:
+        window = safe_series(df, "left_knee_flexion").iloc[max(0, ic - 3):ic + 8].dropna()
         if len(window) >= 2:
             report.landing_stiffness_index = abs(
                 (window.iloc[-1] - window.iloc[0]) / ((len(window) - 1) / fps)
@@ -2974,9 +2984,12 @@ def display_clinical_decision_support(report, clinical_intake):
 
 def create_charts(df, report, fps):
     df = df.copy()
-    df["time_s"] = df["frame"] / fps
-    df["left_knee_flexion_deg"] = 180 - df["left_knee_flexion"]
-    df["right_knee_flexion_deg"] = 180 - df["right_knee_flexion"]
+    frame_series = safe_series(df, "frame")
+    if frame_series.empty:
+        frame_series = pd.Series(range(len(df)), index=df.index, dtype=float)
+    df["time_s"] = frame_series / max(float(fps or 1), 1e-9)
+    df["left_knee_flexion_deg"] = 180 - safe_series(df, "left_knee_flexion")
+    df["right_knee_flexion_deg"] = 180 - safe_series(df, "right_knee_flexion")
 
     fig = make_subplots(rows=2, cols=2, subplot_titles=("Knee Flexion (2D)", "2D Knee Valgus", "Pelvis Drop & Rotation", "Trunk Lean"))
     fig.add_trace(go.Scatter(x=df["time_s"], y=df["left_knee_flexion_deg"], name="Left Knee", line=dict(color="#4fc3f7")), row=1, col=1)
@@ -2984,16 +2997,16 @@ def create_charts(df, report, fps):
     fig.add_hline(y=THRESHOLDS["min_safe_knee_flexion_IC"], line_dash="dot", line_color="#ffb74d", row=1, col=1)
     fig.add_hline(y=THRESHOLDS["min_safe_knee_flexion_peak"], line_dash="dot", line_color="#ef5350", row=1, col=1)
 
-    fig.add_trace(go.Scatter(x=df["time_s"], y=df["left_knee_valgus_2d"], name="Left Valgus", line=dict(color="#4fc3f7"), showlegend=False), row=1, col=2)
-    fig.add_trace(go.Scatter(x=df["time_s"], y=df["right_knee_valgus_2d"].abs(), name="Right Valgus", line=dict(color="#f48fb1"), showlegend=False), row=1, col=2)
+    fig.add_trace(go.Scatter(x=df["time_s"], y=safe_series(df, "left_knee_valgus_2d"), name="Left Valgus", line=dict(color="#4fc3f7"), showlegend=False), row=1, col=2)
+    fig.add_trace(go.Scatter(x=df["time_s"], y=safe_series(df, "right_knee_valgus_2d").abs(), name="Right Valgus", line=dict(color="#f48fb1"), showlegend=False), row=1, col=2)
     fig.add_hline(y=THRESHOLDS["max_safe_valgus_deg"], line_dash="dot", line_color="#ef5350", row=1, col=2)
     fig.add_hline(y=0, line_width=0.5, line_color="#aab4c4", row=1, col=2)
 
-    fig.add_trace(go.Scatter(x=df["time_s"], y=df["pelvis_drop"].abs(), name="Pelvis Drop", line=dict(color="#ffcc02"), showlegend=False), row=2, col=1)
+    fig.add_trace(go.Scatter(x=df["time_s"], y=safe_series(df, "pelvis_drop").abs(), name="Pelvis Drop", line=dict(color="#ffcc02"), showlegend=False), row=2, col=1)
     fig.add_hline(y=THRESHOLDS["max_safe_pelvis_drop_deg"], line_dash="dot", line_color="#ef5350", row=2, col=1)
 
-    fig.add_trace(go.Scatter(x=df["time_s"], y=df["lateral_trunk_lean"].abs(), name="Lateral Lean", line=dict(color="#ce93d8"), showlegend=False), row=2, col=2)
-    fig.add_trace(go.Scatter(x=df["time_s"], y=df["anterior_trunk_lean"], name="Anterior Lean", line=dict(color="#80cbc4"), showlegend=False), row=2, col=2)
+    fig.add_trace(go.Scatter(x=df["time_s"], y=safe_series(df, "lateral_trunk_lean").abs(), name="Lateral Lean", line=dict(color="#ce93d8"), showlegend=False), row=2, col=2)
+    fig.add_trace(go.Scatter(x=df["time_s"], y=safe_series(df, "anterior_trunk_lean"), name="Anterior Lean", line=dict(color="#80cbc4"), showlegend=False), row=2, col=2)
     fig.add_hline(y=THRESHOLDS["max_safe_trunk_lateral_deg"], line_dash="dot", line_color="#ef5350", row=2, col=2)
 
     if report.ic_frame is not None:
@@ -3328,7 +3341,7 @@ def main():
             clinical_intake = report.clinical_intake
             st.success(f"Loaded saved analysis. Processed {len(df)} frames at {fps:.1f} fps.")
 
-        st.info(f"Camera angle assumed: {report.camera_angle} ({report.camera_confidence:.0%} confidence)")
+        st.info(f"Camera view selected by clinician: {report.camera_angle} (quality-adjusted confidence: {report.camera_confidence:.0%})")
         st.info(f"Movement profile: {report.movement_profile}")
 
         with st.expander("Diagnostic Data"):
