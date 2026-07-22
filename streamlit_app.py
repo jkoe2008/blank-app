@@ -29,31 +29,28 @@ except Exception:
 
 st.markdown("""
 <style>
-/* ── Reset & Base ─────────────────────────────────────────────── */
+/* ─── Base ─────────────────────────────────────────────────────── */
 html, body, [class*="css"] {
-    font-family: Inter, "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
-    color: #f1f5f9;
+    font-family: Inter, "IBM Plex Sans", "Segoe UI", system-ui, sans-serif !important;
 }
 
 .stApp {
-    background: #080c18 !important;
-    color: #f1f5f9 !important;
+    background: #070b16 !important;
+    color: #e2e8f0 !important;
 }
 
 .block-container {
-    max-width: 1200px !important;
-    padding-top: 1.25rem !important;
+    max-width: 1180px !important;
+    padding-top: 1.2rem !important;
     padding-bottom: 3.5rem !important;
 }
 
-/* ── Headings ─────────────────────────────────────────────────── */
 h1, h2, h3, h4, h5, h6,
 [data-testid="stMarkdownContainer"] h1,
 [data-testid="stMarkdownContainer"] h2,
 [data-testid="stMarkdownContainer"] h3 {
     color: #f1f5f9 !important;
     font-weight: 700 !important;
-    letter-spacing: -0.01em !important;
 }
 
 p, li,
@@ -62,624 +59,463 @@ p, li,
     color: #94a3b8 !important;
 }
 
-/* ── Sidebar ──────────────────────────────────────────────────── */
+/* ─── Sidebar ───────────────────────────────────────────────────── */
 section[data-testid="stSidebar"] {
-    background: #0d1224 !important;
-    border-right: 1px solid rgba(148, 163, 184, 0.12) !important;
+    background: #0c1120 !important;
+    border-right: 1px solid rgba(148,163,184,0.10) !important;
 }
-
-div[data-testid="stSidebarContent"] {
-    padding: 1.25rem 1rem !important;
-}
-
+div[data-testid="stSidebarContent"] { padding: 1.2rem 0.9rem !important; }
 div[data-testid="stSidebarContent"] [data-testid="stMarkdownContainer"] p,
-div[data-testid="stSidebarContent"] label {
-    color: #94a3b8 !important;
-}
+div[data-testid="stSidebarContent"] label { color: #94a3b8 !important; }
 
-/* ── Inputs ───────────────────────────────────────────────────── */
+/* ─── Inputs ────────────────────────────────────────────────────── */
 input, textarea, [data-baseweb="select"] > div {
-    background: #111827 !important;
-    border-color: rgba(148, 163, 184, 0.18) !important;
+    background: #101827 !important;
+    border-color: rgba(148,163,184,0.15) !important;
     color: #f1f5f9 !important;
     border-radius: 8px !important;
 }
-
 .stSelectbox label, .stTextInput label,
 .stNumberInput label, .stSlider label, .stTextArea label {
     color: #cbd5e1 !important;
     font-weight: 600 !important;
 }
 
-/* ── Buttons ──────────────────────────────────────────────────── */
+/* ─── Buttons ───────────────────────────────────────────────────── */
 div.stButton > button,
 div[data-testid="stDownloadButton"] button {
-    background: #0f766e !important;
+    background: #0d6b63 !important;
     color: #ffffff !important;
-    border: 1px solid rgba(20, 184, 166, 0.35) !important;
+    border: 1px solid rgba(20,184,166,0.30) !important;
     border-radius: 8px !important;
-    box-shadow: none !important;
     font-weight: 700 !important;
+    box-shadow: none !important;
 }
-
 div.stButton > button:hover,
 div[data-testid="stDownloadButton"] button:hover {
-    background: #0d6860 !important;
+    background: #0a5750 !important;
 }
 
-/* ── Tabs ─────────────────────────────────────────────────────── */
+/* ─── Tabs ──────────────────────────────────────────────────────── */
 .stTabs [data-baseweb="tab-list"] {
-    background: #111827 !important;
-    border: 1px solid rgba(148, 163, 184, 0.12) !important;
+    background: #101827 !important;
+    border: 1px solid rgba(148,163,184,0.10) !important;
     border-radius: 10px !important;
-    gap: 0.3rem !important;
-    padding: 0.3rem !important;
+    gap: 0.25rem !important;
+    padding: 0.28rem !important;
 }
-
 .stTabs [data-baseweb="tab"] {
     background: transparent !important;
     border-radius: 8px !important;
-    color: #94a3b8 !important;
+    color: #64748b !important;
     font-weight: 600 !important;
-    padding: 0.5rem 0.85rem !important;
+    padding: 0.45rem 0.8rem !important;
 }
-
 .stTabs [aria-selected="true"] {
-    background: rgba(20, 184, 166, 0.15) !important;
+    background: rgba(20,184,166,0.14) !important;
     color: #f1f5f9 !important;
-    border: 1px solid rgba(20, 184, 166, 0.25) !important;
+    border: 1px solid rgba(20,184,166,0.22) !important;
 }
 
-/* ── Metrics ──────────────────────────────────────────────────── */
+/* ─── Metrics ───────────────────────────────────────────────────── */
 .stMetric {
-    background: #111827 !important;
-    border: 1px solid rgba(148, 163, 184, 0.12) !important;
+    background: #101827 !important;
+    border: 1px solid rgba(148,163,184,0.10) !important;
     border-radius: 10px !important;
     padding: 1rem !important;
 }
-
 [data-testid="stMetricValue"] {
-    color: #14b8a6 !important;
+    color: #2dd4bf !important;
     font-family: "IBM Plex Mono", monospace !important;
 }
 
-/* ── File uploader ────────────────────────────────────────────── */
+/* ─── File uploader ─────────────────────────────────────────────── */
 div[data-testid="stFileUploader"] {
-    background: #111827 !important;
-    border: 1px dashed rgba(148, 163, 184, 0.25) !important;
+    background: #101827 !important;
+    border: 1px dashed rgba(45,212,191,0.25) !important;
     border-radius: 10px !important;
 }
 
-/* ── Dataframes / expanders ───────────────────────────────────── */
+/* ─── Dataframes / expanders ────────────────────────────────────── */
 .stDataFrame, div[data-testid="stTable"] {
     border-radius: 10px !important;
     overflow: hidden !important;
 }
-
 .stExpander {
-    border: 1px solid rgba(148, 163, 184, 0.12) !important;
+    border: 1px solid rgba(148,163,184,0.10) !important;
     border-radius: 10px !important;
-    background: #111827 !important;
+    background: #101827 !important;
 }
+hr { border-color: rgba(148,163,184,0.10) !important; }
 
-hr { border-color: rgba(148, 163, 184, 0.12) !important; }
-
-/* ── App shell / header ───────────────────────────────────────── */
+/* ─── App shell ─────────────────────────────────────────────────── */
 .app-shell {
-    background: #111827;
-    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: linear-gradient(135deg, #0f1e38 0%, #101827 100%);
+    border: 1px solid rgba(148,163,184,0.10);
+    border-top: 2px solid #14b8a6;
     border-radius: 12px;
-    padding: 1.25rem 1.4rem;
+    padding: 1.3rem 1.5rem;
     margin-bottom: 1rem;
 }
-
 .app-kicker {
     color: #14b8a6;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     font-weight: 800;
     margin-bottom: 0.3rem;
 }
-
 .app-title {
     color: #f1f5f9;
-    font-size: 2rem;
+    font-size: 1.95rem;
     font-weight: 800;
     line-height: 1.1;
-    margin: 0 0 0.4rem 0;
+    margin: 0 0 0.45rem 0;
 }
-
 .app-subtitle {
-    color: #94a3b8;
-    font-size: 0.95rem;
-    max-width: 760px;
-    line-height: 1.5;
-    margin-bottom: 1rem;
+    color: #64748b;
+    font-size: 0.92rem;
+    max-width: 740px;
+    line-height: 1.55;
+    margin-bottom: 1.1rem;
 }
 
-/* ── Workflow steps ───────────────────────────────────────────── */
+/* ─── Workflow ──────────────────────────────────────────────────── */
 .workflow {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.6rem;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 0.55rem;
 }
-
 .workflow-step {
-    background: #0d1224;
-    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: rgba(16,24,39,0.80);
+    border: 1px solid rgba(148,163,184,0.10);
     border-radius: 8px;
-    padding: 0.75rem;
+    padding: 0.7rem 0.8rem;
 }
-
 .workflow-num {
     color: #14b8a6;
-    font-size: 0.72rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 0.2rem;
-}
-
-.workflow-label {
-    color: #f1f5f9;
-    font-size: 0.9rem;
-    font-weight: 700;
-}
-
-.workflow-note {
-    color: #64748b;
-    font-size: 0.78rem;
-    margin-top: 0.15rem;
-    line-height: 1.35;
-}
-
-/* ── Clinical snapshot strip ──────────────────────────────────── */
-.snapshot-strip {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.6rem;
-    margin: 0.85rem 0;
-}
-
-.snapshot-card {
-    background: #111827;
-    border: 1px solid rgba(148, 163, 184, 0.12);
-    border-radius: 10px;
-    padding: 0.85rem 1rem;
-}
-
-.snapshot-label {
-    color: #64748b;
     font-size: 0.68rem;
+    font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    font-weight: 700;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.18rem;
 }
+.workflow-label { color: #f1f5f9; font-size: 0.88rem; font-weight: 700; }
+.workflow-note  { color: #475569; font-size: 0.76rem; margin-top: 0.12rem; line-height: 1.3; }
 
-.snapshot-value {
-    color: #f1f5f9;
-    font-size: 1.1rem;
+/* ─── Snapshot strip (top clinical summary) ─────────────────────── */
+.snapshot-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 0.55rem;
+    margin: 0.85rem 0 0.6rem 0;
+}
+.snapshot-card {
+    background: #101827;
+    border: 1px solid rgba(148,163,184,0.10);
+    border-radius: 10px;
+    padding: 0.85rem 0.95rem;
+}
+.snapshot-label {
+    color: #475569;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
     font-weight: 800;
-    line-height: 1.2;
+    margin-bottom: 0.22rem;
 }
+.snapshot-value { color: #f1f5f9; font-size: 1.05rem; font-weight: 800; line-height: 1.2; }
+.snapshot-note  { color: #475569; font-size: 0.72rem; margin-top: 0.18rem; line-height: 1.3; }
+.snapshot-accent { color: #2dd4bf !important; }
 
-.snapshot-note {
-    color: #64748b;
-    font-size: 0.75rem;
-    margin-top: 0.2rem;
-}
-
-/* ── Result strip ─────────────────────────────────────────────── */
+/* ─── Result strip ──────────────────────────────────────────────── */
 .result-strip {
     display: grid;
     grid-template-columns: 1.2fr 1fr 1fr;
-    gap: 0.6rem;
-    margin: 0.85rem 0;
+    gap: 0.55rem;
+    margin: 0.75rem 0;
 }
-
 .result-strip-card {
-    background: #111827;
-    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: #101827;
+    border: 1px solid rgba(148,163,184,0.10);
     border-radius: 10px;
-    padding: 0.9rem 1rem;
+    padding: 0.85rem 0.95rem;
 }
-
 .result-strip-label {
-    color: #64748b;
-    font-size: 0.68rem;
+    color: #475569;
+    font-size: 0.65rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-weight: 700;
-    margin-bottom: 0.25rem;
-}
-
-.result-strip-value {
-    color: #f1f5f9;
-    font-size: 1rem;
-    font-weight: 700;
-    line-height: 1.3;
-}
-
-.result-strip-note {
-    color: #64748b;
-    font-size: 0.75rem;
-    margin-top: 0.2rem;
-    line-height: 1.35;
-}
-
-/* ── Summary panels ───────────────────────────────────────────── */
-.summary-panel {
-    background: #111827;
-    border: 1px solid rgba(148, 163, 184, 0.12);
-    border-radius: 10px;
-    padding: 1rem 1.1rem;
-    min-height: 110px;
-}
-
-.summary-label {
-    color: #64748b;
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-weight: 700;
-    margin-bottom: 0.25rem;
-}
-
-.summary-value {
-    color: #f1f5f9;
-    font-size: 1.2rem;
+    letter-spacing: 0.09em;
     font-weight: 800;
-    line-height: 1.2;
+    margin-bottom: 0.22rem;
 }
+.result-strip-value { color: #f1f5f9; font-size: 0.97rem; font-weight: 700; line-height: 1.3; }
+.result-strip-note  { color: #475569; font-size: 0.72rem; margin-top: 0.18rem; line-height: 1.3; }
 
-.summary-note {
-    color: #64748b;
-    font-size: 0.78rem;
-    margin-top: 0.3rem;
-    line-height: 1.35;
+/* ─── Summary panels ────────────────────────────────────────────── */
+.summary-panel {
+    background: #101827;
+    border: 1px solid rgba(148,163,184,0.10);
+    border-radius: 10px;
+    padding: 0.95rem 1.05rem;
+    min-height: 105px;
 }
+.summary-label {
+    color: #475569;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-weight: 800;
+    margin-bottom: 0.22rem;
+}
+.summary-value { color: #f1f5f9; font-size: 1.1rem; font-weight: 800; line-height: 1.2; }
+.summary-note  { color: #475569; font-size: 0.76rem; margin-top: 0.28rem; line-height: 1.35; }
 
-/* ── Clinical banner ──────────────────────────────────────────── */
+/* ─── Clinical banner ───────────────────────────────────────────── */
 .clinical-banner {
-    background: #111827;
-    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: #101827;
+    border: 1px solid rgba(148,163,184,0.10);
     border-left: 3px solid #14b8a6;
     border-radius: 10px;
-    padding: 1rem 1.15rem;
-    margin: 0.85rem 0;
+    padding: 0.95rem 1.1rem;
+    margin: 0.75rem 0;
 }
-
 .clinical-banner h3 {
-    margin: 0 0 0.25rem 0;
+    margin: 0 0 0.22rem 0 !important;
     color: #f1f5f9 !important;
-    font-size: 0.95rem !important;
+    font-size: 0.9rem !important;
+    font-weight: 800 !important;
 }
-
 .clinical-banner p {
-    margin: 0;
+    margin: 0 !important;
     color: #94a3b8 !important;
-    line-height: 1.5;
-    font-size: 0.92rem;
+    line-height: 1.5 !important;
+    font-size: 0.9rem !important;
 }
 
-/* ── Clinical grid / cards ────────────────────────────────────── */
+/* ─── Clinical grid ─────────────────────────────────────────────── */
 .clinical-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.6rem;
-    margin: 0.6rem 0 1rem 0;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 0.55rem;
+    margin: 0.55rem 0 0.85rem 0;
 }
-
 .clinical-card {
-    background: #111827;
-    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: #101827;
+    border: 1px solid rgba(148,163,184,0.10);
     border-radius: 10px;
-    padding: 0.85rem;
-    min-height: 90px;
+    padding: 0.8rem 0.9rem;
+    min-height: 85px;
 }
-
 .clinical-card-label {
-    color: #64748b;
-    font-size: 0.68rem;
+    color: #475569;
+    font-size: 0.65rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-weight: 700;
-    margin-bottom: 0.25rem;
+    letter-spacing: 0.09em;
+    font-weight: 800;
+    margin-bottom: 0.22rem;
 }
+.clinical-card-value { color: #f1f5f9; font-size: 0.92rem; font-weight: 700; line-height: 1.25; }
+.clinical-card-note  { color: #475569; font-size: 0.74rem; line-height: 1.35; margin-top: 0.28rem; }
 
-.clinical-card-value {
-    color: #f1f5f9;
-    font-size: 0.95rem;
-    font-weight: 700;
-    line-height: 1.25;
-}
-
-.clinical-card-note {
-    color: #64748b;
-    font-size: 0.75rem;
-    line-height: 1.35;
-    margin-top: 0.3rem;
-}
-
-/* ── Clinical section ─────────────────────────────────────────── */
+/* ─── Clinical section ──────────────────────────────────────────── */
 .clinical-section {
-    background: #111827;
-    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: #101827;
+    border: 1px solid rgba(148,163,184,0.10);
     border-radius: 10px;
-    padding: 1rem 1.1rem;
-    margin: 0.7rem 0;
+    padding: 0.95rem 1.05rem;
+    margin: 0.65rem 0;
 }
-
 .clinical-section-title {
     color: #f1f5f9;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 800;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.55rem;
 }
 
-/* ── Decision pill ────────────────────────────────────────────── */
+/* ─── Decision pill ─────────────────────────────────────────────── */
 .decision-pill {
     display: inline-block;
     border-radius: 999px;
-    padding: 0.28rem 0.65rem;
-    font-size: 0.72rem;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.68rem;
     font-weight: 800;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.55rem;
 }
+.decision-green  { background: rgba(34,197,94,.12);  color: #86efac; border: 1px solid rgba(134,239,172,.18); }
+.decision-yellow { background: rgba(245,158,11,.12); color: #fcd34d; border: 1px solid rgba(252,211,77,.18); }
+.decision-red    { background: rgba(239,68,68,.12);  color: #fca5a5; border: 1px solid rgba(252,165,165,.18); }
 
-.decision-green {
-    background: rgba(34, 197, 94, 0.12);
-    color: #86efac;
-    border: 1px solid rgba(134, 239, 172, 0.2);
-}
-
-.decision-yellow {
-    background: rgba(245, 158, 11, 0.12);
-    color: #fcd34d;
-    border: 1px solid rgba(252, 211, 77, 0.2);
-}
-
-.decision-red {
-    background: rgba(239, 68, 68, 0.12);
-    color: #fca5a5;
-    border: 1px solid rgba(252, 165, 165, 0.2);
-}
-
-/* ── Flag cards ───────────────────────────────────────────────── */
+/* ─── Pro flag cards ────────────────────────────────────────────── */
 .pro-flag-card {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.7rem;
     align-items: flex-start;
-    background: #111827;
-    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: #101827;
+    border: 1px solid rgba(148,163,184,0.10);
     border-radius: 10px;
-    padding: 0.8rem 0.9rem;
-    margin: 0.45rem 0;
+    padding: 0.75rem 0.85rem;
+    margin: 0.4rem 0;
 }
-
 .pro-flag-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
-    font-size: 0.85rem;
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 0.82rem;
     flex: 0 0 auto;
 }
-
 .pro-flag-content { flex: 1; min-width: 0; }
-
-.pro-flag-title {
-    color: #f1f5f9;
-    font-weight: 700;
-    font-size: 0.92rem;
-    margin-bottom: 0.15rem;
-    line-height: 1.3;
-}
-
-.pro-flag-body {
-    color: #94a3b8;
-    font-size: 0.84rem;
-    line-height: 1.4;
-}
-
-.pro-flag-meta {
-    color: #475569;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    font-weight: 700;
-    margin-top: 0.35rem;
-}
+.pro-flag-title   { color: #f1f5f9; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.12rem; line-height: 1.3; }
+.pro-flag-body    { color: #64748b; font-size: 0.82rem; line-height: 1.4; }
+.pro-flag-meta    { color: #334155; font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 800; margin-top: 0.3rem; }
 
 .pro-flag-critical { border-left: 3px solid #ef4444; }
-.pro-flag-critical .pro-flag-icon { background: rgba(239,68,68,.12); color: #fca5a5; }
+.pro-flag-critical .pro-flag-icon { background: rgba(239,68,68,.13); color: #fca5a5; }
+.pro-flag-warning  { border-left: 3px solid #f59e0b; }
+.pro-flag-warning  .pro-flag-icon { background: rgba(245,158,11,.13); color: #fcd34d; }
+.pro-flag-info     { border-left: 3px solid #38bdf8; }
+.pro-flag-info     .pro-flag-icon { background: rgba(56,189,248,.13); color: #7dd3fc; }
+.pro-flag-success  { border-left: 3px solid #22c55e; }
+.pro-flag-success  .pro-flag-icon { background: rgba(34,197,94,.13); color: #86efac; }
 
-.pro-flag-warning { border-left: 3px solid #f59e0b; }
-.pro-flag-warning .pro-flag-icon { background: rgba(245,158,11,.12); color: #fcd34d; }
+/* ─── Risk cards ────────────────────────────────────────────────── */
+.risk-card { padding: 1.4rem; border-radius: 10px; margin: 0.45rem 0; border: 1px solid rgba(148,163,184,0.10); }
+.risk-card h3 { margin: 0; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.07em; opacity: 0.8; }
+.risk-card h1 { margin: 0.35rem 0; font-size: 2.6rem; font-family: "IBM Plex Mono", monospace; }
+.risk-card p  { margin: 0; font-weight: 800; letter-spacing: 0.07em; font-size: 0.82rem; }
 
-.pro-flag-info { border-left: 3px solid #38bdf8; }
-.pro-flag-info .pro-flag-icon { background: rgba(56,189,248,.12); color: #7dd3fc; }
+.risk-low        { background: rgba(34,197,94,.09);  color: #86efac; }
+.risk-moderate   { background: rgba(245,158,11,.09); color: #fcd34d; }
+.risk-high       { background: rgba(249,115,22,.09); color: #fdba74; }
+.risk-very-high  { background: rgba(239,68,68,.09);  color: #fca5a5; }
 
-.pro-flag-success { border-left: 3px solid #22c55e; }
-.pro-flag-success .pro-flag-icon { background: rgba(34,197,94,.12); color: #86efac; }
+.badge-low       { background: rgba(34,197,94,.12);  color:#86efac; border:1px solid rgba(134,239,172,.18); }
+.badge-moderate  { background: rgba(245,158,11,.12); color:#fcd34d; border:1px solid rgba(252,211,77,.18); }
+.badge-high      { background: rgba(249,115,22,.12); color:#fdba74; border:1px solid rgba(253,186,116,.18); }
+.badge-very-high { background: rgba(239,68,68,.12);  color:#fca5a5; border:1px solid rgba(252,165,165,.18); }
 
-/* ── Risk cards ───────────────────────────────────────────────── */
-.risk-card {
-    padding: 1.5rem;
-    border-radius: 10px;
-    margin: 0.5rem 0;
-    border: 1px solid rgba(148, 163, 184, 0.12);
-}
-.risk-card h3 { margin: 0; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85; }
-.risk-card h1 { margin: 0.4rem 0; font-size: 2.8rem; font-family: "IBM Plex Mono", monospace; }
-.risk-card p  { margin: 0; font-weight: 700; letter-spacing: 0.08em; font-size: 0.85rem; }
-
-.risk-low       { background: rgba(34,197,94,0.10);  color: #86efac; }
-.risk-moderate  { background: rgba(245,158,11,0.10); color: #fcd34d; }
-.risk-high      { background: rgba(249,115,22,0.10); color: #fdba74; }
-.risk-very-high { background: rgba(239,68,68,0.10);  color: #fca5a5; }
-
-.badge-low       { background: rgba(34,197,94,.12);  color:#86efac; border:1px solid rgba(134,239,172,.2); }
-.badge-moderate  { background: rgba(245,158,11,.12); color:#fcd34d; border:1px solid rgba(252,211,77,.2); }
-.badge-high      { background: rgba(249,115,22,.12); color:#fdba74; border:1px solid rgba(253,186,116,.2); }
-.badge-very-high { background: rgba(239,68,68,.12);  color:#fca5a5; border:1px solid rgba(252,165,165,.2); }
-
-/* ── Progression cards ────────────────────────────────────────── */
+/* ─── Progression cards ─────────────────────────────────────────── */
 .rx-card {
-    background: #111827;
-    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: #101827;
+    border: 1px solid rgba(148,163,184,0.10);
     border-radius: 10px;
-    padding: 1rem;
-    margin: 0.7rem 0;
+    padding: 0.95rem;
+    margin: 0.65rem 0;
 }
-
-.rx-header {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    align-items: flex-start;
-    margin-bottom: 0.75rem;
-}
-
-.rx-title  { color: #f1f5f9; font-size: 1rem; font-weight: 800; margin-bottom: 0.2rem; }
-.rx-trigger { color: #64748b; font-size: 0.82rem; line-height: 1.35; }
-
+.rx-header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; margin-bottom: 0.7rem; }
+.rx-title   { color: #f1f5f9; font-size: 0.97rem; font-weight: 800; margin-bottom: 0.18rem; }
+.rx-trigger { color: #475569; font-size: 0.8rem; line-height: 1.35; }
 .rx-chip {
     white-space: nowrap;
     background: rgba(20,184,166,.12);
-    color: #14b8a6;
-    border: 1px solid rgba(20,184,166,.2);
+    color: #2dd4bf;
+    border: 1px solid rgba(45,212,191,.18);
     border-radius: 999px;
-    padding: 0.25rem 0.6rem;
-    font-size: 0.7rem;
+    padding: 0.22rem 0.55rem;
+    font-size: 0.67rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
 }
-
-.rx-level-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.6rem;
-}
-
+.rx-level-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 0.55rem; }
 .rx-level {
-    background: #0d1224;
-    border: 1px solid rgba(148,163,184,0.10);
+    background: #0a1020;
+    border: 1px solid rgba(148,163,184,0.08);
     border-radius: 8px;
-    padding: 0.75rem;
+    padding: 0.7rem;
 }
+.rx-level-name { color: #2dd4bf; font-size: 0.67rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.28rem; }
+.rx-exercise   { color: #f1f5f9; font-weight: 700; line-height: 1.25; margin-bottom: 0.3rem; font-size: 0.88rem; }
+.rx-dose       { color: #64748b; font-size: 0.8rem; margin-bottom: 0.3rem; }
+.rx-advance    { color: #334155; font-size: 0.76rem; line-height: 1.35; }
 
-.rx-level-name { color: #14b8a6; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.3rem; }
-.rx-exercise   { color: #f1f5f9; font-weight: 700; line-height: 1.25; margin-bottom: 0.35rem; }
-.rx-dose       { color: #94a3b8; font-size: 0.82rem; margin-bottom: 0.35rem; }
-.rx-advance    { color: #64748b; font-size: 0.78rem; line-height: 1.35; }
-
-/* ── Rec panel ────────────────────────────────────────────────── */
+/* ─── Rec panel ─────────────────────────────────────────────────── */
 .rec-panel {
-    background: #111827;
-    border: 1px solid rgba(148,163,184,0.12);
+    background: #101827;
+    border: 1px solid rgba(148,163,184,0.10);
     border-radius: 10px;
-    padding: 0.9rem;
-    margin-bottom: 0.85rem;
+    padding: 0.85rem;
+    margin-bottom: 0.8rem;
 }
-
-.rec-title { color: #f1f5f9; font-weight: 800; margin-bottom: 0.5rem; }
-
+.rec-title { color: #f1f5f9; font-weight: 800; margin-bottom: 0.45rem; font-size: 0.92rem; }
 .rec-item {
     color: #cbd5e1;
-    background: #0d1224;
+    background: #0a1020;
     border-radius: 8px;
-    padding: 0.6rem 0.75rem;
-    margin: 0.35rem 0;
+    padding: 0.55rem 0.7rem;
+    margin: 0.3rem 0;
     border-left: 3px solid #14b8a6;
-    font-size: 0.9rem;
+    font-size: 0.87rem;
     line-height: 1.4;
 }
 
-/* ── Download / empty ─────────────────────────────────────────── */
+/* ─── Download ──────────────────────────────────────────────────── */
 .download-panel {
-    background: #111827;
-    border: 1px solid rgba(148,163,184,0.12);
+    background: #101827;
+    border: 1px solid rgba(148,163,184,0.10);
     border-radius: 10px;
-    padding: 0.9rem;
-    margin-bottom: 0.7rem;
+    padding: 0.85rem;
+    margin-bottom: 0.65rem;
 }
+.download-title { color: #f1f5f9; font-weight: 800; margin-bottom: 0.18rem; font-size: 0.92rem; }
+.download-copy  { color: #475569; font-size: 0.8rem; line-height: 1.35; }
 
-.download-title { color: #f1f5f9; font-weight: 800; margin-bottom: 0.2rem; }
-.download-copy  { color: #64748b; font-size: 0.82rem; line-height: 1.35; }
-
+/* ─── Empty state ───────────────────────────────────────────────── */
 .empty-state {
-    border: 1px dashed rgba(148,163,184,0.2);
-    background: #111827;
+    border: 1px dashed rgba(45,212,191,0.2);
+    background: #101827;
     border-radius: 12px;
-    padding: 1.25rem;
+    padding: 2rem 1.5rem;
     margin: 0.85rem 0;
+    text-align: center;
 }
+.empty-title { color: #f1f5f9; font-size: 1.1rem; font-weight: 800; margin-bottom: 0.35rem; }
+.empty-copy  { color: #475569; line-height: 1.55; margin: 0; font-size: 0.88rem; }
 
-.empty-title { color: #f1f5f9; font-size: 1.05rem; font-weight: 800; margin-bottom: 0.3rem; }
-.empty-copy  { color: #64748b; line-height: 1.5; margin: 0; font-size: 0.9rem; }
-
+/* ─── Section lead ──────────────────────────────────────────────── */
 .section-lead {
-    color: #64748b;
-    margin-top: -0.25rem;
-    margin-bottom: 0.85rem;
+    color: #475569;
+    margin-top: -0.2rem;
+    margin-bottom: 0.8rem;
     line-height: 1.5;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
 }
 
+/* ─── Flow shell ────────────────────────────────────────────────── */
 .flow-shell {
-    background: #111827;
-    border: 1px solid rgba(148,163,184,0.12);
+    background: #101827;
+    border: 1px solid rgba(148,163,184,0.10);
     border-radius: 10px;
-    padding: 0.85rem 1rem;
-    margin: 0.7rem 0;
+    padding: 0.8rem 0.95rem;
+    margin: 0.65rem 0;
 }
+.flow-title { color: #f1f5f9; font-size: 0.9rem; font-weight: 800; margin-bottom: 0.12rem; }
+.flow-note  { color: #475569; font-size: 0.82rem; line-height: 1.4; }
 
-.flow-title { color: #f1f5f9; font-size: 0.95rem; font-weight: 800; margin-bottom: 0.15rem; }
-.flow-note  { color: #64748b; font-size: 0.84rem; line-height: 1.4; }
-
-/* ── Side table ───────────────────────────────────────────────── */
-.side-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+/* ─── Side table ────────────────────────────────────────────────── */
+.side-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; border-radius: 10px; overflow: hidden; }
 .side-table th {
-    text-align: left;
-    color: #94a3b8;
-    background: #0d1224;
-    padding: 0.65rem 0.75rem;
-    font-size: 0.7rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    font-weight: 700;
+    text-align: left; color: #94a3b8;
+    background: #0a1020;
+    padding: 0.6rem 0.7rem;
+    font-size: 0.67rem; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 800;
 }
 .side-table td {
-    padding: 0.65rem 0.75rem;
-    color: #cbd5e1;
-    border-top: 1px solid rgba(148,163,184,0.08);
-    background: #111827;
+    padding: 0.6rem 0.7rem; color: #cbd5e1;
+    border-top: 1px solid rgba(148,163,184,0.07);
+    background: #101827;
 }
 
-.clinical-list {
-    margin: 0;
-    padding-left: 1rem;
-    color: #94a3b8;
-    line-height: 1.6;
-    font-size: 0.9rem;
-}
+.clinical-list { margin: 0; padding-left: 1rem; color: #94a3b8; line-height: 1.65; font-size: 0.88rem; }
 
-/* ── Responsive ───────────────────────────────────────────────── */
+/* ─── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-    .workflow, .clinical-grid, .result-strip,
-    .snapshot-strip, .rx-level-grid {
+    .workflow, .clinical-grid, .result-strip, .snapshot-strip, .rx-level-grid {
         grid-template-columns: 1fr !important;
     }
-    .app-title { font-size: 1.6rem !important; }
+    .app-title { font-size: 1.55rem !important; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -2310,53 +2146,82 @@ def build_pdf_report(report, patient_id, clinician_name, fig=None):
     return buffer.getvalue()
 
 
+def display_clinical_snapshot(report):
+    """Compact top strip: score · profile · confidence · next test."""
+    impression = report.clinical_impression or {}
+    confidence = impression.get("interpretation_confidence", "N/A")
+    next_test   = impression.get("recommended_next_test", "—")
+    rts         = impression.get("return_to_sport_bucket", "—")
+
+    acl_color = (
+        "#86efac" if report.acl_risk_score < 20 else
+        "#fcd34d" if report.acl_risk_score < 45 else
+        "#fdba74" if report.acl_risk_score < 70 else
+        "#fca5a5"
+    )
+
+    st.markdown(f"""
+    <div class="snapshot-strip">
+        <div class="snapshot-card">
+            <div class="snapshot-label">ACL Risk Score</div>
+            <div class="snapshot-value" style="color:{acl_color}">
+                {report.acl_risk_score:.1f} <span style="font-size:0.7rem;color:#475569">/ 100</span>
+            </div>
+            <div class="snapshot-note">{report.acl_risk_level}</div>
+        </div>
+        <div class="snapshot-card">
+            <div class="snapshot-label">Movement Profile</div>
+            <div class="snapshot-value" style="font-size:0.82rem">{report.movement_profile}</div>
+        </div>
+        <div class="snapshot-card">
+            <div class="snapshot-label">Data Confidence</div>
+            <div class="snapshot-value">{confidence}</div>
+            <div class="snapshot-note">
+                Visibility {report.mean_visibility:.0%} &nbsp;·&nbsp; Detection {report.pose_detection_rate:.0%}
+            </div>
+        </div>
+        <div class="snapshot-card">
+            <div class="snapshot-label">Recommended Next Step</div>
+            <div class="snapshot-value" style="font-size:0.82rem">{next_test}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 def display_premium_header():
     st.markdown("""
     <div class="app-shell">
-        <div class="app-kicker">Clinical Movement Screen</div>
+        <div class="app-kicker">ACL &amp; Lower Extremity · Clinical Screen</div>
         <h1 class="app-title">Landing Mechanics Assessment</h1>
         <div class="app-subtitle">
-            Review frontal and side-view landing videos with clear metric validity, quality checks,
-            risk summaries, corrective priorities, and exportable clinical documentation.
-        </div>
-        <div class="app-meta">
-            <div class="app-meta-item">
-                <div class="app-meta-label">Screen Type</div>
-                <div class="app-meta-value">Single-session landing mechanics</div>
-            </div>
-            <div class="app-meta-item">
-                <div class="app-meta-label">Clinical Use</div>
-                <div class="app-meta-value">Triage and progression planning support</div>
-            </div>
-            <div class="app-meta-item">
-                <div class="app-meta-label">Output</div>
-                <div class="app-meta-value">Risk summary, quality context, and exportable report</div>
-            </div>
+            Upload a frontal or side-view landing video. The system scores only the metrics
+            appropriate for the selected view, flags measurement quality, and generates
+            a clinic-ready report.
         </div>
         <div class="workflow">
             <div class="workflow-step">
-                <div class="workflow-num">01</div>
-                <div class="workflow-label">Intake</div>
-                <div class="workflow-note">Patient context and test status.</div>
+                <div class="workflow-num">01 · Intake</div>
+                <div class="workflow-label">Patient context</div>
+                <div class="workflow-note">Age, sport, limb, symptoms, RTS phase.</div>
             </div>
             <div class="workflow-step">
-                <div class="workflow-num">02</div>
-                <div class="workflow-label">Capture</div>
-                <div class="workflow-note">Frontal and/or side view video.</div>
+                <div class="workflow-num">02 · Capture</div>
+                <div class="workflow-label">Upload video</div>
+                <div class="workflow-note">Frontal for valgus. Side for flexion.</div>
             </div>
             <div class="workflow-step">
-                <div class="workflow-num">03</div>
-                <div class="workflow-label">Review</div>
-                <div class="workflow-note">Risk, validity, and quality flags.</div>
+                <div class="workflow-num">03 · Review</div>
+                <div class="workflow-label">Clinical output</div>
+                <div class="workflow-note">Risk, quality flags, RTS guidance.</div>
             </div>
             <div class="workflow-step">
-                <div class="workflow-num">04</div>
-                <div class="workflow-label">Export</div>
-                <div class="workflow-note">PDF, CSV, and JSON records.</div>
+                <div class="workflow-num">04 · Export</div>
+                <div class="workflow-label">Download report</div>
+                <div class="workflow-note">PDF, CSV, and JSON.</div>
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
+
 
 def display_upload_guidance():
     st.markdown("""
@@ -2575,6 +2440,7 @@ def main():
             <div class="flow-note">Review return-to-sport guidance, interpretation confidence, and recommended next step before moving into detailed tabs.</div>
         </div>
         """, unsafe_allow_html=True)
+        display_clinical_snapshot(report)
         display_result_strip(report)
         display_executive_summary(report)
         st.divider()
